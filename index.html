@@ -31,7 +31,7 @@ const asset_list = [
 ];
 
 
-g.web.canvas(document.getElementsByTagName('canvas')[0]);
+g.web.canvas(document.getElementsByTagName('canvas')[0], {fixed_size: true});
 
 g.initialize(function ()
 {
@@ -54,6 +54,8 @@ g.initialize(function ()
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.lineWidth(1);
+
+        g.web.assets['mesh/point'] =  g.web.gfx.mesh.create({ positions: [0, 0, 0]});
     },
     function(complete) {
         document.getElementById('server_msg').innerText = Math.ceil(100 * complete) + '%';
@@ -89,26 +91,21 @@ g.update(function (dt)
 
 function update_camera(camera, focus, q, dist, dt)
 {
-    const forward = q.quat_rotate_vector([0, 0, 1]);
-    var up = q.quat_rotate_vector([0, 1, 0]);
-
-    camera.position = forward.mul(-dist);
-
-    camera.look_at(camera.position, focus, up);
+    camera.position = [0, 0, 5];
+    camera.look_at(camera.position, [0, 0, 0], [0, 1, 0]);
 }
 
 function draw_body(position, mass)
 {
     const model = [].scale(mass).mat_mul([].translate(position));
 
-    g.web.assets[base + 'mesh/plane'].using_shader('body')
-                             .with_attribute({name:'a_position', buffer: 'positions', components: 3})
-                             .with_attribute({name:'a_tex_coord', buffer: 'texture_coords', components: 2})
-                             // .with_attribute({name:'a_normal', buffer: 'normals', components: 3})
-                             .set_uniform('u_proj').mat4(cam.projection())
-                             .set_uniform('u_view').mat4([].translate(cam.position.mul(-1)))
-                             .set_uniform('u_model').mat4(model)
-                             .draw_tris();
+    g.web.assets['mesh/point'].using_shader('body')
+                         .with_attribute({name:'a_position', buffer: 'positions', components: 3})
+                         .set_uniform('u_proj').mat4(cam.projection())
+                         .set_uniform('u_view').mat4(view_q.quat_to_matrix().mat_mul(cam.view()))
+                         .set_uniform('u_model').mat4(model)
+                         .set_uniform('u_mass').float(mass)
+                         .draw_points();
 }
 
 function draw_skybox()
@@ -118,7 +115,7 @@ function draw_skybox()
                              .with_attribute({name:'a_position', buffer: 'positions', components: 3})
                              .with_attribute({name:'a_tex_coord', buffer: 'texture_coords', components: 2})
                              .set_uniform('u_proj').mat4(cam.projection())
-                             .set_uniform('u_view').mat4(cam.view())
+                             .set_uniform('u_view').mat4(view_q.quat_to_matrix())
                              .set_uniform('u_model').mat4([].scale(500))
                              .set_uniform('u_texture').texture(g.web.assets[base + 'tex/stars'])
                              .draw_tris();
@@ -131,14 +128,14 @@ g.web.draw(function (dt)
     if (g.is_running == false) { return; }
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    update_camera(cam, [0, 0, 0], view_q, Math.cos(t += dt) + 2, dt);
+    update_camera(cam, [0, 0, -1], view_q, 10, dt); //Math.cos(t += dt) + 2, dt);
     cam.perspective(Math.PI / 3, 0.1, 1000);
 
     draw_skybox();
+    draw_body([0, 0, 0], 10);
+    draw_body([Math.cos(t), Math.sin(t), 0], 1);
 
-
-
-    draw_body([0, 0, 0], 1);
+    t += dt;
 });
 
 g.start();
@@ -148,7 +145,10 @@ g.start();
 </head>
 
 <body style="margin:0" onload="on_load()">
+<center>
 <p id="server_msg"></p>
-<canvas style="padding:0;margin:0;width:100%;height:100%"></canvas>
+<canvas width=640 height=640></canvas>
+</center>
+
 </body>
 </html>

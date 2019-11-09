@@ -30,7 +30,7 @@ g.web = {
 
                 window.gl = gl;
 
-                document.body.onresize();
+                if (document.body.onresize) { document.body.onresize(); }
 
                 return true;
             }
@@ -271,6 +271,11 @@ g.web = {
                                         gl.uniformMatrix4fv(loc, false, v);
                                         return shader_ref;
                                     },
+                                    float: function(s)
+                                    {
+                                        gl.uniform1f(loc, s);
+                                        return shader_ref;
+                                    },
                                     texture: function(tex)
                                     {
                                         gl.activeTexture(gl.TEXTURE0 + tex_unit);
@@ -313,6 +318,23 @@ g.web = {
                                 else
                                 {
                                     gl.drawArrays(gl.LINES, 0, mesh_ref.positions.length / 3);
+                                }
+                            },
+                            draw_points: function()
+                            {
+                                if (mesh_ref.indices)
+                                {
+                                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh_ref.indices);
+                                    gl.drawElements(
+                                        gl.POINTS,
+                                        mesh_ref.element_count,
+                                        gl.UNSIGNED_SHORT,
+                                        0
+                                    );
+                                }
+                                else
+                                {
+                                    gl.drawArrays(gl.POINTS, 0, mesh_ref.element_count / 3);
                                 }
                             }
                         };
@@ -551,14 +573,19 @@ g.web = {
 
 	on_message: function(f) { g.web._on_message = f; return this; },
 
-	canvas: function(dom_element)
+	canvas: function(dom_element, opts)
 	{
+        opts = opts || {};
 		g.web._canvas = dom_element;
-		document.body.onresize = function(e) {
-			g.web._canvas.width = document.body.clientWidth;
-			g.web._canvas.height = document.body.clientHeight;
-            gl.viewport(0, 0, document.body.clientWidth, document.body.clientHeight);
-		};
+
+        if (!opts.fixed_size)
+        {
+            document.body.onresize = function(e) {
+                g.web._canvas.width = document.body.clientWidth;
+                g.web._canvas.height = document.body.clientHeight;
+                gl.viewport(0, 0, document.body.clientWidth, document.body.clientHeight);
+            };            
+        }
 
         g.web._canvas.requestPointerLock = g.web._canvas.requestPointerLock ||
                                            g.web._canvas.mozRequestPointerLock;

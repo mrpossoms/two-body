@@ -4,11 +4,13 @@ html {
     font-family: Arial, Helvetica, sans-serif;
 }
 
+/*
 canvas {
     background-color: #333;
     position: absolute;
     z-index: 0;
 }
+*/
 
 p {
     position: absolute;
