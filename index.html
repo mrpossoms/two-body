@@ -18,10 +18,30 @@ function orbital_elements()
     this.argument_of_pariapsis = 0;
     this.u = 1;
 
+    this.r = function(t)
+    {
+        // TODO
+    };
+
+    this.v = function(t)
+    {
+        // TODO
+    };
+
+    this.h = function(t)
+    {
+        return this.r(t).cross(this.v(t));
+    };
+
+    this.line_of_nodes = function(t)
+    {
+
+    };
 }
 
 var view_q = [0,0,0,1];
 var cam = new g.web.gfx.camera();
+var mouse_down = false;
 var t = 0;
 
 function on_load()
@@ -101,19 +121,18 @@ g.web.pointer.on_move(function (event)
 {
     if (g.is_running == false) { return; }
 
+    if (!mouse_down) { return; }
 
     const dqx = [].quat_rotation([0, 1, 0], event.movementX * k.mouse.sensitivity);
-    const dqy = [].quat_rotation([1, 0, 0], -event.movementY * k.mouse.sensitivity);
+    const dqy = [].quat_rotation([1, 0, 0], event.movementY * k.mouse.sensitivity);
     const dq = dqx.quat_mul(dqy);
 
     view_q = view_q.quat_mul(dq);
 });
 
-g.web.pointer.on_press(function ()
-{
+g.web.pointer.on_press(function (e) { mouse_down = true; });
 
-});
-
+g.web.pointer.on_release(function (e) { mouse_down = false; });
 
 g.update(function (dt)
 {
@@ -195,7 +214,7 @@ g.web.draw(function (dt)
     if (g.is_running == false) { return; }
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    update_camera(cam, [0, 0, -1], view_q, 10, dt); //Math.cos(t += dt) + 2, dt);
+    update_camera(cam, [0, 0, -1], view_q, 10, dt);
     cam.perspective(Math.PI / 3, 0.1, 1000);
 
     draw_skybox();

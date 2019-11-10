@@ -563,11 +563,19 @@ g.web = {
 
 		on_press: function(on_press_func)
 		{
-			g.web._canvas.onclick = function()
+			g.web._canvas.onmousedown = function(e)
             {
-                on_press_func();
+                on_press_func(e);
             };
-		}
+		},
+
+        on_release: function(on_release_func)
+        {
+            g.web._canvas.onmouseup = function()
+            {
+                on_release_func();
+            };
+        }
 	},
 
 	key:
