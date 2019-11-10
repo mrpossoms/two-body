@@ -11,6 +11,15 @@ const k = {
     },
 };
 
+function orbital_elements()
+{
+    this.eccentricity = 0;
+    this.inclination = 0;
+    this.argument_of_pariapsis = 0;
+    this.u = 1;
+
+}
+
 var view_q = [0,0,0,1];
 var cam = new g.web.gfx.camera();
 var t = 0;
@@ -21,8 +30,8 @@ const base = window.location.pathname.replace('index.html', '');
 const asset_list = [
 	base + 'shaders/basic_textured.vert',
 	base + 'shaders/basic_textured.frag',
-    base + 'shaders/basic_textured.vert',
-    base + 'shaders/basic_textured.frag',
+    base + 'shaders/basic_color.vert',
+    base + 'shaders/basic_color.frag',
     base + 'shaders/body.vert',
     base + 'shaders/body.frag',
 	base + 'meshes/exported-cube.json',
@@ -49,13 +58,36 @@ g.initialize(function ()
             g.web.assets[base + 'shaders/body.frag']
         );
 
+        g.web.gfx.shader.create('basic_color',
+            g.web.assets[base + 'shaders/basic_color.vert'],
+            g.web.assets[base + 'shaders/basic_color.frag']
+        );
+
         g.is_running = true;
 
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.lineWidth(1);
 
-        g.web.assets['mesh/point'] =  g.web.gfx.mesh.create({ positions: [0, 0, 0]});
+        g.web.assets['mesh/point'] = g.web.gfx.mesh.create({ positions: [0, 0, 0]});
+
+        g.web.assets['mesh/basis'] = g.web.gfx.mesh.create({
+            positions: [
+                0, 0, 0, 1, 0, 0,
+                0, 0, 0, 0, 1, 0,
+                0, 0, 0, 0, 0, 1,
+            ],
+            colors: [
+                1, 0, 0, 1, 1, 0, 0, 1,
+                0, 1, 0, 1, 0, 1, 0, 1,
+                0, 0, 1, 1, 0, 0, 1, 1,
+            ]
+        });
+
+        g.web.assets['mesh/line'] = g.web.gfx.mesh.create({
+            positions: [ 0, 0, 0, 1, 0, 0, ],
+            colors: [ 1, 1, 1, 0.5, 1, 1, 1, 0.5, ]
+        });
     },
     function(complete) {
         document.getElementById('server_msg').innerText = Math.ceil(100 * complete) + '%';
@@ -95,22 +127,24 @@ function update_camera(camera, focus, q, dist, dt)
     camera.look_at(camera.position, [0, 0, 0], [0, 1, 0]);
 }
 
-function draw_body(position, mass)
+function draw_body(position, mass, light_dir)
 {
     const model = [].scale(mass).mat_mul([].translate(position));
 
+    gl.enable(gl.DEPTH_TEST);
     g.web.assets['mesh/point'].using_shader('body')
                          .with_attribute({name:'a_position', buffer: 'positions', components: 3})
                          .set_uniform('u_proj').mat4(cam.projection())
                          .set_uniform('u_view').mat4(view_q.quat_to_matrix().mat_mul(cam.view()))
                          .set_uniform('u_model').mat4(model)
+                         .set_uniform('u_rot').mat4(view_q.quat_to_matrix())
                          .set_uniform('u_mass').float(mass)
+                         .set_uniform('u_light_dir').vec3(light_dir)
                          .draw_points();
 }
 
 function draw_skybox()
 {
-    gl.disable(gl.DEPTH_TEST);
     g.web.assets[base + 'mesh/exported-cube'].using_shader('basic_textured')
                              .with_attribute({name:'a_position', buffer: 'positions', components: 3})
                              .with_attribute({name:'a_tex_coord', buffer: 'texture_coords', components: 2})
@@ -122,6 +156,39 @@ function draw_skybox()
     gl.enable(gl.DEPTH_TEST);
 }
 
+function draw_basis()
+{
+    g.web.assets['mesh/basis'].using_shader('basic_color')
+                             .with_attribute({name:'a_position', buffer: 'positions', components: 3})
+                             .with_attribute({name:'a_color', buffer: 'colors', components: 4})
+                             .set_uniform('u_proj').mat4(cam.projection())
+                             .set_uniform('u_view').mat4(view_q.quat_to_matrix().mat_mul(cam.view()))
+                             .set_uniform('u_model').mat4([].scale(2))
+                             .draw_lines();
+}
+
+function draw_orbit(path_func, steps, dt)
+{
+    steps = steps || 100;
+    dt = dt || 0.1;
+
+    for (var s = 0; s < steps; ++s)
+    {
+        const t_0 = s * dt;
+        const t_1 = (s + 1) * dt;
+        const line = g.web.assets['mesh/line'];
+
+        line.buffer('positions').set_data([path_func(t_0), path_func(t_1)]);
+
+        line.using_shader('basic_color')
+            .with_attribute({name:'a_position', buffer: 'positions', components: 3})
+            .with_attribute({name:'a_color', buffer: 'colors', components: 4})
+            .set_uniform('u_proj').mat4(cam.projection())
+            .set_uniform('u_view').mat4(view_q.quat_to_matrix().mat_mul(cam.view()))
+            .set_uniform('u_model').mat4([].scale(1))
+            .draw_lines();
+    }
+}
 
 g.web.draw(function (dt)
 {
@@ -132,8 +199,18 @@ g.web.draw(function (dt)
     cam.perspective(Math.PI / 3, 0.1, 1000);
 
     draw_skybox();
-    draw_body([0, 0, 0], 10);
-    draw_body([Math.cos(t), Math.sin(t), 0], 1);
+
+    const light_dir = [ -1, 0, 0 ].norm();
+
+    function circular_orbit(t)
+    {
+        return [Math.cos(t), 0, Math.sin(t)].mul(2);
+    }
+
+    draw_body([0, 0, 0], 10, light_dir);
+    draw_body(circular_orbit(t), 1, light_dir);
+    draw_basis();
+    draw_orbit(circular_orbit);
 
     t += dt;
 });

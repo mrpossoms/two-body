@@ -218,6 +218,19 @@ g.web = {
                     vertices: {},
                     shader_configs: {},
 
+                    buffer: function(buffer_name)
+                    {
+                        const mesh_ref = this;
+
+                        return {
+                            set_data: function(v)
+                            {
+                                gl.bindBuffer(gl.ARRAY_BUFFER, mesh_ref.vertices[buffer_name]);
+                                gl.bufferData(gl.ARRAY_BUFFER, v.as_Float32Array(), gl.DYNAMIC_DRAW);
+                            },
+                        };
+                    },
+
                     using_shader: function(shader_name)
                     {
                         const mesh_ref = this;
@@ -271,6 +284,11 @@ g.web = {
                                         gl.uniformMatrix4fv(loc, false, v);
                                         return shader_ref;
                                     },
+                                    vec3: function(v)
+                                    {
+                                        gl.uniform3fv(loc, v.as_Float32Array(), 1);
+                                        return shader_ref;
+                                    },
                                     float: function(s)
                                     {
                                         gl.uniform1f(loc, s);
@@ -317,7 +335,7 @@ g.web = {
                                 }
                                 else
                                 {
-                                    gl.drawArrays(gl.LINES, 0, mesh_ref.positions.length / 3);
+                                    gl.drawArrays(gl.LINES, 0, mesh_ref.element_count / 3);
                                 }
                             },
                             draw_points: function()
@@ -338,7 +356,7 @@ g.web = {
                                 }
                             }
                         };
-                    }
+                    },
                 };
 
                 if (!mesh_json) { return mesh; }
@@ -355,6 +373,13 @@ g.web = {
                     mesh.vertices.texture_coords = gl.createBuffer();
                     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertices.texture_coords);
                     gl.bufferData(gl.ARRAY_BUFFER, mesh_json.texture_coords.as_Float32Array(), gl.STATIC_DRAW);
+                }
+
+                if (mesh_json.colors)
+                {
+                    mesh.vertices.colors = gl.createBuffer();
+                    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertices.colors);
+                    gl.bufferData(gl.ARRAY_BUFFER, mesh_json.colors.as_Float32Array(), gl.STATIC_DRAW);
                 }
 
                 if (mesh_json.normals)
@@ -584,7 +609,7 @@ g.web = {
                 g.web._canvas.width = document.body.clientWidth;
                 g.web._canvas.height = document.body.clientHeight;
                 gl.viewport(0, 0, document.body.clientWidth, document.body.clientHeight);
-            };            
+            };
         }
 
         g.web._canvas.requestPointerLock = g.web._canvas.requestPointerLock ||
