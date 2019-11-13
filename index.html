@@ -13,24 +13,74 @@ const k = {
 
 function orbital_elements()
 {
-    this.eccentricity = 0;
-    this.inclination = 0;
-    this.argument_of_pariapsis = 0;
-    this.u = 1;
+    this.e = 0; // eccentricity
+    this.i = 0; // inclination
+    this.ω = 0; // argument of periapsis
+    this.µ = 1; // gravitational parameter
+
+    this.r0 = [1, 0, 0];
+    this.v0 = [0, 0, 1];
+
+    this.location = function(t)
+    {
+        with (this)
+        {
+            return [
+                Math.cos(t) * a() - (a() - r_per()),
+                0,
+                Math.sin(t) * b()
+            ];
+        }
+    };
 
     this.r = function(t)
     {
         // TODO
+        return this.r0;
     };
 
     this.v = function(t)
     {
         // TODO
+        return this.v0;
     };
 
-    this.h = function(t)
+    this.h = function()
     {
-        return this.r(t).cross(this.v(t));
+        return this.r(0).cross(this.v(0));
+    };
+
+    this.a = function() // semi-major axis
+    {
+        with (this)
+        {
+            const h2 = h().dot(h());
+            return h2 / (1 - e * e) * µ;
+        }
+    };
+
+    this.b = function()
+    {
+        with (this)
+        {
+            return a() * Math.sqrt(1 - e * e);
+        }
+    };
+
+    this.r_per = function()
+    {
+        with (this)
+        {
+            return (1 - e) * this.a();
+        }
+    };
+
+    this.r_ap = function()
+    {
+        with (this)
+        {
+            return (1 + e) * this.a();
+        }
     };
 
     this.line_of_nodes = function(t)
@@ -43,6 +93,10 @@ var view_q = [0,0,0,1];
 var cam = new g.web.gfx.camera();
 var mouse_down = false;
 var t = 0;
+var el = new orbital_elements();
+
+el.v0 = [0, 0, 1];
+el.e = 0.0;
 
 function on_load()
 {
@@ -148,7 +202,7 @@ function update_camera(camera, focus, q, dist, dt)
 
 function draw_body(position, mass, light_dir)
 {
-    const model = [].scale(mass).mat_mul([].translate(position));
+    const model = [].scale(mass).mat_mul([].translate(position.mul(-1)));
 
     gl.enable(gl.DEPTH_TEST);
     g.web.assets['mesh/point'].using_shader('body')
@@ -221,15 +275,15 @@ g.web.draw(function (dt)
 
     const light_dir = [ -1, 0, 0 ].norm();
 
-    function circular_orbit(t)
+    function orbit_wrapper(t)
     {
-        return [Math.cos(t), 0, Math.sin(t)].mul(2);
+        return el.location(t);
     }
 
-    draw_body([0, 0, 0], 10, light_dir);
-    draw_body(circular_orbit(t), 1, light_dir);
+    draw_body([0, 0, 0], 5, light_dir);
+    draw_body(orbit_wrapper(t), 1, light_dir);
     draw_basis();
-    draw_orbit(circular_orbit);
+    draw_orbit(orbit_wrapper);
 
     t += dt;
 });
@@ -245,6 +299,7 @@ g.start();
 <p id="server_msg"></p>
 <canvas width=640 height=640></canvas>
 </center>
+<input type="number" title="ω" id="arg-of-periapsis">
 
 </body>
 </html>
