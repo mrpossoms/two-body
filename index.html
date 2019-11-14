@@ -1,8 +1,10 @@
 <html>
 <head>
 <link href="css/style.css" rel="stylesheet">
+<link href="css/bootstrap.min.css" rel="stylesheet">
 <script type="text/javascript" src="js/g.js"></script>
 <script type="text/javascript" src="js/g.web.js"></script>
+<script type="text/javascript" src="js/elements.js"></script>
 <script type="text/javascript">
 
 const k = {
@@ -11,83 +13,6 @@ const k = {
     },
 };
 
-function orbital_elements()
-{
-    this.e = 0; // eccentricity
-    this.i = 0; // inclination
-    this.ω = 0; // argument of periapsis
-    this.µ = 1; // gravitational parameter
-
-    this.r0 = [1, 0, 0];
-    this.v0 = [0, 0, 1];
-
-    this.location = function(t)
-    {
-        with (this)
-        {
-            return [
-                Math.cos(t) * a() - (a() - r_per()),
-                0,
-                Math.sin(t) * b()
-            ];
-        }
-    };
-
-    this.r = function(t)
-    {
-        // TODO
-        return this.r0;
-    };
-
-    this.v = function(t)
-    {
-        // TODO
-        return this.v0;
-    };
-
-    this.h = function()
-    {
-        return this.r(0).cross(this.v(0));
-    };
-
-    this.a = function() // semi-major axis
-    {
-        with (this)
-        {
-            const h2 = h().dot(h());
-            return h2 / (1 - e * e) * µ;
-        }
-    };
-
-    this.b = function()
-    {
-        with (this)
-        {
-            return a() * Math.sqrt(1 - e * e);
-        }
-    };
-
-    this.r_per = function()
-    {
-        with (this)
-        {
-            return (1 - e) * this.a();
-        }
-    };
-
-    this.r_ap = function()
-    {
-        with (this)
-        {
-            return (1 + e) * this.a();
-        }
-    };
-
-    this.line_of_nodes = function(t)
-    {
-
-    };
-}
 
 var view_q = [0,0,0,1];
 var cam = new g.web.gfx.camera();
@@ -97,6 +22,7 @@ var el = new orbital_elements();
 
 el.v0 = [0, 0, 1];
 el.e = 0.0;
+el.i = 0;
 
 function on_load()
 {
@@ -113,6 +39,39 @@ const asset_list = [
 	base + 'imgs/stars.jpg',
 ];
 
+function controls_for(properties)
+{
+    for (var i = properties.length; i--;)
+    {
+        const prop = properties[i];
+        const e = document.getElementById(prop);
+
+        if (!e) { console.error('no element ' + prop); continue; }
+
+        function handler(prop)
+        {
+            var chain = prop.split('.');
+
+            var targ = window;
+            var val = chain[0];
+            for (var j = 1; j < chain.length; j++)
+            {
+                targ = targ[val];
+                val = chain[j];
+            }
+
+            e.oninput = function(event)
+            {
+                console.log(event.target.valueAsNumber);
+                targ[val] = event.target.valueAsNumber;
+            };
+        }
+
+        e.handler = new handler(prop);
+    }
+}
+
+controls_for([ 'el.i', 'el.e', 'el.ω' ]);
 
 g.web.canvas(document.getElementsByTagName('canvas')[0], {fixed_size: true});
 
@@ -196,7 +155,7 @@ g.update(function (dt)
 
 function update_camera(camera, focus, q, dist, dt)
 {
-    camera.position = [0, 0, 5];
+    camera.position = [0, 0, el.a() * 2];
     camera.look_at(camera.position, [0, 0, 0], [0, 1, 0]);
 }
 
@@ -280,8 +239,8 @@ g.web.draw(function (dt)
         return el.location(t);
     }
 
-    draw_body([0, 0, 0], 5, light_dir);
-    draw_body(orbit_wrapper(t), 1, light_dir);
+    draw_body([0, 0, 0], 2.5, light_dir);
+    draw_body(orbit_wrapper(t), 0.5, light_dir);
     draw_basis();
     draw_orbit(orbit_wrapper);
 
@@ -294,12 +253,34 @@ g.start();
 </script>
 </head>
 
-<body style="margin:0" onload="on_load()">
-<center>
-<p id="server_msg"></p>
-<canvas width=640 height=640></canvas>
-</center>
-<input type="number" title="ω" id="arg-of-periapsis">
+<body class="container-fluid bg-dark" onload="on_load()">
+<h1 class="text-light">Orbital Elements Calculator</h1>
+<section class="row">
+
+<canvas class="col" width=640 height=480></canvas>
+
+<section class="input-group col">
+    <!-- Argument of periapsis -->
+    <label class="text-light" for="arg-of-periapsis">ω</label>
+    <input id="el.ω" type="range" class="custom-range" min="0" max="360" value=0>
+
+    <!-- eccentricity -->
+    <label class="text-light" for="eccentricity">e</label>
+    <input id="el.e" type="range" class="custom-range" step="0.01" min="0" max="1" value=0>
+
+    <!-- inclination -->
+    <label class="text-light" for="inclination">i</label>
+    <input id="el.i" type="range" class="custom-range" min="0" max="180" value="0">
+
+    <!-- longitude of ascending node -->
+<!--     <label class="text-light" for="inclination">Ω</label>
+    <input type="range" class="custom-range" min="0" max="360" id="lng-of-ascending-node"> -->
+
+</section>
+
+</section>
+
+
 
 </body>
 </html>

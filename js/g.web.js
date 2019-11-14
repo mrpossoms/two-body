@@ -531,6 +531,14 @@ g.web = {
 			return this;
 		},
 
+        on_scroll: function(on_scoll_func)
+        {
+            g.web._canvas.addEventListener("scroll", function(e)
+            {
+                on_scoll_func(e);
+            });
+        },
+
         on_pointer_lock_change: function(on_pointer_lock_func)
         {
             if ("onpointerlockchange" in document)
