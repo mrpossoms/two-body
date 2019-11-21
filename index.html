@@ -20,9 +20,11 @@ var mouse_down = false;
 var t = 0;
 var el = new orbital_elements();
 
-el.v0 = [0, 0, 1];
+// el.v0 = [0, 0, 1];
 el.e = 0.0;
 el.i = 0;
+
+function element(id) { return document.getElementById(id); }
 
 function on_load()
 {
@@ -39,6 +41,26 @@ const asset_list = [
 	base + 'imgs/stars.jpg',
 ];
 
+function do_on_change(e)
+{
+    if (!e.attributes) { return; }
+
+    for (var k in e.attributes)
+    {
+        const attr = e.attributes[k];
+        if (attr.name !== 'on-change') { continue; }
+
+        const functions = attr.value.split(' ');
+
+        for (var i = functions.length; i--;)
+        {
+            eval(functions[i]);
+        }
+
+        return;
+    }
+}
+
 function controls_for(properties)
 {
     for (var i = properties.length; i--;)
@@ -50,7 +72,7 @@ function controls_for(properties)
 
         function handler(prop)
         {
-            var chain = prop.split('.');
+            var chain = prop.replace('[', '.').replace(']', '').split('.');
 
             var targ = window;
             var val = chain[0];
@@ -63,7 +85,17 @@ function controls_for(properties)
             e.oninput = function(event)
             {
                 console.log(event.target.valueAsNumber);
-                targ[val] = event.target.valueAsNumber;
+
+                if (typeof(targ[val]) === 'function')
+                {
+                    targ[val](event.target.valueAsNumber);
+                }
+                else
+                {
+                    targ[val] = event.target.valueAsNumber;
+                }
+
+                do_on_change(e);
             };
         }
 
@@ -71,13 +103,28 @@ function controls_for(properties)
     }
 }
 
-controls_for([ 'el.i', 'el.e', 'el.ω' ]);
+// controls_for([ 'el.i', 'el.e', 'el.ω' ]);
+// controls_for([ 'el.r0[0]', 'el.r0[1]', 'el.r0[2]' ]);
+// controls_for([ 'el.v0[0]', 'el.v0[1]', 'el.v0[2]' ]);
+
+el.control.for_prop('el.i', 'i');
+el.control.for_prop('el.e', 'e');
+el.control.for_prop('el.ω', 'ω');
+
+el.control.for_prop('el.r0[0]', 'r0[0]');
+el.control.for_prop('el.r0[1]', 'r0[1]');
+el.control.for_prop('el.r0[2]', 'r0[2]');
+
+el.control.for_prop('el.v0[0]', 'v0[0]');
+el.control.for_prop('el.v0[1]', 'v0[1]');
+el.control.for_prop('el.v0[2]', 'v0[2]');
 
 g.web.canvas(document.getElementsByTagName('canvas')[0], {fixed_size: true});
 
 g.initialize(function ()
 {
     g.is_running = false;
+    el.compute.elements_from_vectors();
 
     g.web.assets.load(asset_list,
     function() {
@@ -147,15 +194,10 @@ g.web.pointer.on_press(function (e) { mouse_down = true; });
 
 g.web.pointer.on_release(function (e) { mouse_down = false; });
 
-g.update(function (dt)
-{
-
-});
-
 
 function update_camera(camera, focus, q, dist, dt)
 {
-    camera.position = [0, 0, el.a() * 2];
+    camera.position = [0, 0, el.a * 2];
     camera.look_at(camera.position, [0, 0, 0], [0, 1, 0]);
 }
 
@@ -181,7 +223,7 @@ function draw_skybox()
                              .with_attribute({name:'a_position', buffer: 'positions', components: 3})
                              .with_attribute({name:'a_tex_coord', buffer: 'texture_coords', components: 2})
                              .set_uniform('u_proj').mat4(cam.projection())
-                             .set_uniform('u_view').mat4(view_q.quat_to_matrix())
+                             .set_uniform('u_view').mat4(view_q.quat_inverse().quat_to_matrix())
                              .set_uniform('u_model').mat4([].scale(500))
                              .set_uniform('u_texture').texture(g.web.assets[base + 'tex/stars'])
                              .draw_tris();
@@ -190,6 +232,7 @@ function draw_skybox()
 
 function draw_basis()
 {
+    gl.lineWidth(10);
     g.web.assets['mesh/basis'].using_shader('basic_color')
                              .with_attribute({name:'a_position', buffer: 'positions', components: 3})
                              .with_attribute({name:'a_color', buffer: 'colors', components: 4})
@@ -199,10 +242,29 @@ function draw_basis()
                              .draw_lines();
 }
 
+function draw_line(p0, p1, color)
+{
+    gl.lineWidth(2);
+    const line = g.web.assets['mesh/line'];
+
+    line.buffer('positions').set_data([p0, p1]);
+    line.buffer('colors').set_data(color.concat(color));
+
+    line.using_shader('basic_color')
+        .with_attribute({name:'a_position', buffer: 'positions', components: 3})
+        .with_attribute({name:'a_color', buffer: 'colors', components: 4})
+        .set_uniform('u_proj').mat4(cam.projection())
+        .set_uniform('u_view').mat4(view_q.quat_to_matrix().mat_mul(cam.view()))
+        .set_uniform('u_model').mat4([].scale(1))
+        .draw_lines();
+}
+
 function draw_orbit(path_func, steps, dt)
 {
+    gl.lineWidth(2);
     steps = steps || 100;
-    dt = dt || 0.1;
+    dt = dt || (Math.PI / (steps / 2));
+
 
     for (var s = 0; s < steps; ++s)
     {
@@ -211,6 +273,7 @@ function draw_orbit(path_func, steps, dt)
         const line = g.web.assets['mesh/line'];
 
         line.buffer('positions').set_data([path_func(t_0), path_func(t_1)]);
+        line.buffer('colors').set_data([1, 1, 1, 0.5, 1, 1, 1, 0.5,]);
 
         line.using_shader('basic_color')
             .with_attribute({name:'a_position', buffer: 'positions', components: 3})
@@ -236,13 +299,17 @@ g.web.draw(function (dt)
 
     function orbit_wrapper(t)
     {
-        return el.location(t);
+        return el.r(t);
     }
 
     draw_body([0, 0, 0], 2.5, light_dir);
-    draw_body(orbit_wrapper(t), 0.5, light_dir);
     draw_basis();
+
+    draw_body(orbit_wrapper(t), 0.5, light_dir);
     draw_orbit(orbit_wrapper);
+    draw_line([0, 0, 0], el.r(t), [1, 0, 1, 1]);
+    draw_line([0, 0, 0], el.h(t), [1, 1, 0 , 1]);
+    draw_line(el.r(t), el.v(t).add(el.r(t)), [0, 1, 1 , 1]);
 
     t += dt;
 });
@@ -262,15 +329,15 @@ g.start();
 <section class="input-group col">
     <!-- Argument of periapsis -->
     <label class="text-light" for="arg-of-periapsis">ω</label>
-    <input id="el.ω" type="range" class="custom-range" min="0" max="360" value=0>
+    <input id="el.ω" type="range" class="custom-range" vectors_from_elements min="0" max="360" value=0>
 
     <!-- eccentricity -->
     <label class="text-light" for="eccentricity">e</label>
-    <input id="el.e" type="range" class="custom-range" step="0.01" min="0" max="1" value=0>
+    <input id="el.e" type="range" class="custom-range" vectors_from_elements step="0.01" min="0" max="1" value=0>
 
     <!-- inclination -->
     <label class="text-light" for="inclination">i</label>
-    <input id="el.i" type="range" class="custom-range" min="0" max="180" value="0">
+    <input id="el.i" type="range" class="custom-range" vectors_from_elements min="0" max="180" value="0">
 
     <!-- longitude of ascending node -->
 <!--     <label class="text-light" for="inclination">Ω</label>
@@ -280,6 +347,39 @@ g.start();
 
 </section>
 
+<!-- R0 vector -->
+<section class="row">
+<div class="col">
+    <h2 class="float-left text-light text-right">r0 = {</h2>
+
+    <input id="el.r0[0]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="1">
+    <h2 class="float-left text-light">, </h2>
+
+    <input id="el.r0[1]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="0">
+    <h2 class="float-left text-light">, </h2>
+
+    <input id="el.r0[2]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="0">
+
+    <h2 class="float-left text-light text-left">}</h2>
+</div>
+</section>
+
+<!-- V vector -->
+<section class="row">
+<div class="col">
+    <h2 class="float-left text-light text-right">v0 = {</h2>
+
+    <input id="el.v0[0]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="0">
+    <h2 class="float-left text-light">, </h2>
+
+    <input id="el.v0[1]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="0">
+    <h2 class="float-left text-light">, </h2>
+
+    <input id="el.v0[2]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="1">
+
+    <h2 class="float-left text-light text-left">}</h2>
+</div>
+</section>
 
 
 </body>

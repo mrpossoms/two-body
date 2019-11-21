@@ -344,6 +344,16 @@ Array.prototype.flatten = function()
 	return v;
 };
 
+Array.prototype.assign = function(a)
+{
+	if (typeof(this[0]) === 'number')
+	{
+		for (var i = 0; i < this.length; ++i) { this[i] = a[i]; }
+	}
+
+	return this;
+};
+
 Array.prototype.as_Float32Array = function(first_argument) {
 	return new Float32Array(this.flatten());
 };
