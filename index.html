@@ -20,9 +20,6 @@ var mouse_down = false;
 var t = 0;
 var el = new orbital_elements();
 
-// el.v0 = [0, 0, 1];
-el.e = 0.0;
-el.i = 0;
 
 function element(id) { return document.getElementById(id); }
 
@@ -103,13 +100,11 @@ function controls_for(properties)
     }
 }
 
-// controls_for([ 'el.i', 'el.e', 'el.ω' ]);
-// controls_for([ 'el.r0[0]', 'el.r0[1]', 'el.r0[2]' ]);
-// controls_for([ 'el.v0[0]', 'el.v0[1]', 'el.v0[2]' ]);
-
 el.control.for_prop('el.i', 'i');
 el.control.for_prop('el.e', 'e');
 el.control.for_prop('el.ω', 'ω');
+el.control.for_prop('el.Ω', 'Ω');
+el.control.for_prop('el.ν', 'ν');
 
 el.control.for_prop('el.r0[0]', 'r0[0]');
 el.control.for_prop('el.r0[1]', 'r0[1]');
@@ -119,12 +114,14 @@ el.control.for_prop('el.v0[0]', 'v0[0]');
 el.control.for_prop('el.v0[1]', 'v0[1]');
 el.control.for_prop('el.v0[2]', 'v0[2]');
 
+el.compute.elements_from_vectors();
+
 g.web.canvas(document.getElementsByTagName('canvas')[0], {fixed_size: true});
 
 g.initialize(function ()
 {
     g.is_running = false;
-    el.compute.elements_from_vectors();
+
 
     g.web.assets.load(asset_list,
     function() {
@@ -197,7 +194,7 @@ g.web.pointer.on_release(function (e) { mouse_down = false; });
 
 function update_camera(camera, focus, q, dist, dt)
 {
-    camera.position = [0, 0, el.a * 2];
+    camera.position = [0, 0, el.p() * 2];
     camera.look_at(camera.position, [0, 0, 0], [0, 1, 0]);
 }
 
@@ -309,7 +306,15 @@ g.web.draw(function (dt)
     draw_orbit(orbit_wrapper);
     draw_line([0, 0, 0], el.r(t), [1, 0, 1, 1]);
     draw_line([0, 0, 0], el.h(t), [1, 1, 0 , 1]);
-    draw_line(el.r(t), el.v(t).add(el.r(t)), [0, 1, 1 , 1]);
+    draw_line(el.r(t), el.v(t).add(el.r(t)), [0, 1, 1, 1]);
+
+    draw_line([0, 0, 0], el.r0, [1, 0, 1, 0.25]);
+    draw_line(el.r0, el.r0.add(el.v0), [0, 1, 1, 0.25]);
+
+    draw_line([0, 0, 0], el.n().norm(), [0, 0, 1, 0.75]);
+    draw_line([0, 0, 0], el.e_v, [0, 1, 1, 0.75]);
+    // draw_line([0, 0, 0], el.v0, [0, 1, 0 , 0.25]);
+    // draw_line([0, 0, 0], el.e_v, [1, 1, 1 , 1]);
 
     t += dt;
 });
@@ -329,19 +334,24 @@ g.start();
 <section class="input-group col">
     <!-- Argument of periapsis -->
     <label class="text-light" for="arg-of-periapsis">ω</label>
-    <input id="el.ω" type="range" class="custom-range" vectors_from_elements min="0" max="360" value=0>
+    <input id="el.ω" type="range" class="custom-range" vectors_from_elements min="0" max="360" value="0">
+
+    <!-- true anomaly ν -->
+    <label class="text-light" for="inclination">ν</label>
+    <input id="el.ν" type="range" class="custom-range" vectors_from_elements min="0" max="360" value="0">
+
+    <!-- longitude of ascending node -->
+    <label class="text-light" for="inclination">Ω</label>
+    <input id="el.Ω" type="range" class="custom-range" vectors_from_elements min="0" max="360" value="0">
 
     <!-- eccentricity -->
     <label class="text-light" for="eccentricity">e</label>
-    <input id="el.e" type="range" class="custom-range" vectors_from_elements step="0.01" min="0" max="1" value=0>
+    <input id="el.e" type="range" class="custom-range" vectors_from_elements step="0.01" min="0" max="1" value="0">
 
     <!-- inclination -->
     <label class="text-light" for="inclination">i</label>
     <input id="el.i" type="range" class="custom-range" vectors_from_elements min="0" max="180" value="0">
 
-    <!-- longitude of ascending node -->
-<!--     <label class="text-light" for="inclination">Ω</label>
-    <input type="range" class="custom-range" min="0" max="360" id="lng-of-ascending-node"> -->
 
 </section>
 

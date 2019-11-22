@@ -1,22 +1,25 @@
+const dtr = Math.PI / 180;
+const rtd = 180 / Math.PI;
+
 function orbital_elements()
 {
     // basis vectors
     this.I = [1, 0, 0];
-    this.J = [0, 0, 1];
-    this.K = [0, 1, 0];
+    this.J = [0, 1, 0];
+    this.K = [0, 0, 1];
 
     this.µ = 1; // gravitational parameter
-    this.a = 0; // semi major axis
 
     this.e = 0; // eccentricity
+    this.e_v = [0, 0, 0]; // eccentricity vector
     this.i = 0; // inclination
     this.ω = 0; // argument of periapsis
     this.Ω = 0; // longitude of the ascending node
     this.l = 0; // longitude of periapsis
     this.ν = 0; // true anomaly
 
-    this.r0 = [1, 0, 0];
-    this.v0 = [0, 0, 1];
+    this.r0 = this.I.slice();
+    this.v0 = this.J.slice();
 
     this.control = {
         _proxy: this,
@@ -81,47 +84,59 @@ function orbital_elements()
             {
                 const p = this._set[prop];
                 const el = p.element;
-                el.value = p.target[p.prop];
+                el.value = Math.round(p.target[p.prop] * 100) / 100;
             }
         }
     };
 
     this.compute = {
         _proxy: this,
+        eccentricity: function()
+        {
+            with (this._proxy)
+            {
+                const v_mag = v0.len();
+                const r_mag = r0.len();
+                const r_scl = v_mag * v_mag - µ / r_mag;
+                e_v = r0.mul(r_scl).sub(v0.mul(r0.dot(v0)));
+                e = e_v.len();
+            }
+        },
+
         elements_from_vectors: function()
         {
             with (this._proxy)
             {
-                const rtd = 180 / Math.PI;
-
-                // compute eccentricity
-                const v_mag = v0.len();
-                const r_mag = r0.len();
-                const r_scl = v_mag * v_mag - µ / r_mag;
-                const e_v = r0.mul(r_scl).sub(v0.mul(r0.dot(v0)));
-                e = e_v.len();
-
                 // compute inclination
                 i = Math.acos(h().norm().dot(K)) * rtd;
 
-                // compute the argument of periapsis
-                const n_mag = n().len();
-                if (n_mag > 0)
-                {
-                    ω = Math.acos(e_v.dot(n()) / e * n_mag) * rtd;
-                }
-                else
-                {
-                    ω = NaN;
-                }
-
-                // compute the longitude of periapsis
+                // compute eccentricity
+                compute.eccentricity();
 
                 // compute the longitude of the ascending node
+                Ω = Math.acos(n().norm().dot(I)) * rtd;
+                if (n()[1] > 0 && Ω > 180)
+                {
+                    Ω -= 180;
+                }
 
-                // compute the semi-major axis
-                const h2 = h(0).dot(h(0));
-                a = h2 / (1 - e * e) * µ;
+                // compute the argument of periapsis
+                ω = Math.acos(e_v.norm().dot(n().norm())) * rtd;
+                if (e_v[2] > 0 && ω > 180)
+                {
+                    ω -= 180;
+                }
+
+                // compute the true anomaly
+                ν = Math.acos(e_v.norm().dot(r0.norm())) * rtd;
+                if (r0.dot(v0) > 0)
+                {
+                    ν -= 180;
+                }
+
+                ω = isNaN(ω) ? 0 : ω;
+                Ω = isNaN(Ω) ? 0 : Ω;
+                ν = isNaN(ν) ? 0 : ν;
 
                 this._proxy.control.update_all();
             }
@@ -130,25 +145,17 @@ function orbital_elements()
         {
             with (this._proxy)
             {
-                const dtr = Math.PI / 180;
-                var w = isNaN(ω) ? 0 : ω;
+                const R = M_perifocal_to_geo();
 
-                const c_Ω = Math.cos(Ω * dtr), s_Ω = Math.sin(Ω * dtr);
-                const c_ω = Math.cos(w * dtr), s_ω = Math.sin(w * dtr);
-                const c_i = Math.cos(i * dtr), s_i = Math.sin(i * dtr);
+                const _ν = isNaN(ν) ? 0 : ν;
+                const r_mag = p() / (1 + e * Math.cos(_ν * dtr)); // scalar length of perifocal 'r' vector
+                const r_p = [r_mag * Math.cos(_ν * dtr), r_mag * Math.sin(_ν * dtr), 0];              // perifocal 'r' vector
+                const v_p = [-Math.sin(_ν * dtr), e + Math.cos(_ν * dtr), 0].mul(Math.sqrt(µ / p())); // perifocal 'v' vector
 
-                // transformation matrix between perifocal coords to geocentric
-                const R = [
-                    [ c_Ω * c_ω - s_Ω * s_ω * c_i,   s_Ω * s_i, -c_Ω * s_ω - s_Ω * c_ω * c_i,],
-                    [ s_Ω * c_ω + c_Ω * s_ω * c_i,  -c_Ω * s_i, -s_Ω * s_ω + c_Ω * c_ω * c_i,],
-                    [ s_ω * s_i,                     c_i      , c_ω * s_i,                   ],
-                ];
-
-                r_mag = p() / (1 + e * Math.cos(ν * dtr)); // scalar length of perifocal 'r' vector
-                r_p = [r_mag * Math.cos(ν * dtr), r_mag * Math.sin(ν * dtr), 0];              // perifocal 'r' vector
-                v_p = [-Math.sin(ν * dtr), e + Math.cos(ν * dtr), 0].mul(Math.sqrt(µ / p())); // perifocal 'v' vector
                 r0.assign(R.mat_mul(r_p).flatten());
                 v0.assign(R.mat_mul(v_p).flatten());
+
+                compute.eccentricity();
 
                 this._proxy.control.update_all();
             }
@@ -160,15 +167,13 @@ function orbital_elements()
     {
         with (this)
         {
-            const dtr = Math.PI / 180;
-            const w = isNaN(ω) ? 0 : ω;
-            const q_i = [].quat_rotation(I, i * dtr);
-            const q_ω = [].quat_rotation(K, w * dtr);
-            return q_ω.quat_mul(q_i).quat_rotate_vector([
-                Math.cos(t) * a - (a - r_per()),
-                0,
-                Math.sin(t) * p()
-            ]);
+            const _ν = isNaN(ν) ? 0 : ν;
+            t += _ν * dtr;
+
+            const r_mag = p() / (1 + e * Math.cos(t)); // scalar length of perifocal 'r' vector
+            const r_p = [r_mag * Math.cos(t), r_mag * Math.sin(t), 0];              // perifocal 'r' vector
+
+            return M_perifocal_to_geo().mat_mul(r_p);
         }
     };
 
@@ -176,15 +181,11 @@ function orbital_elements()
     {
         with (this)
         {
-            const dtr = Math.PI / 180;
-            const w = isNaN(ω) ? 0 : ω;
-            const q_i = [].quat_rotation(I, i * dtr);
-            const q_ω = [].quat_rotation(K, w * dtr);
-            return q_ω.quat_mul(q_i).quat_rotate_vector([
-                -a * Math.sin(t),
-                0,
-                Math.cos(t) * p()
-            ]);
+            const _ν = isNaN(ν) ? 0 : ν;
+            t += _ν * dtr;
+            const v_p = [-Math.sin(t), e + Math.cos(t), 0].mul(Math.sqrt(µ / p())); // perifocal 'v' vector
+
+            return M_perifocal_to_geo().mat_mul(v_p);
         }
     };
 
@@ -197,23 +198,7 @@ function orbital_elements()
     {
         with (this)
         {
-            return a * Math.sqrt(1 - e * e);
-        }
-    };
-
-    this.r_per = function()
-    {
-        with (this)
-        {
-            return (1 - e) * this.a;
-        }
-    };
-
-    this.r_ap = function()
-    {
-        with (this)
-        {
-            return (1 + e) * this.a;
+            return Math.pow(h().len(), 2) / µ;
         }
     };
 
@@ -224,4 +209,24 @@ function orbital_elements()
             return K.cross(h());
         }
     };
+
+    this.M_perifocal_to_geo = function()
+    {
+        with (this)
+        {
+            var w = isNaN(ω) ? 0 : ω;
+            var o = isNaN(Ω) ? 0 : Ω;
+
+            const c_Ω = Math.cos(o * dtr), s_Ω = Math.sin(o * dtr);
+            const c_ω = Math.cos(w * dtr), s_ω = Math.sin(w * dtr);
+            const c_i = Math.cos(i * dtr), s_i = Math.sin(i * dtr);
+
+            // transformation matrix between perifocal coords to geocentric
+            return [
+                [ c_Ω * c_ω - s_Ω * s_ω * c_i, -c_Ω * s_ω - s_Ω * c_ω * c_i,  s_Ω * s_i, ],
+                [ s_Ω * c_ω + c_Ω * s_ω * c_i, -s_Ω * s_ω + c_Ω * c_ω * c_i, -c_Ω * s_i, ],
+                [ s_ω * s_i,                   c_ω * s_i,                     c_i      , ],
+            ];// .transpose();
+        }
+    }
 }
