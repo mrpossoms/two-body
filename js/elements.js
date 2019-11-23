@@ -115,23 +115,23 @@ function orbital_elements()
 
                 // compute the longitude of the ascending node
                 Ω = Math.acos(n().norm().dot(I)) * rtd;
-                if (n()[1] > 0 && Ω > 180)
+                if (n()[1] <= 0)
                 {
-                    Ω -= 180;
+                    Ω += 180;
                 }
 
                 // compute the argument of periapsis
                 ω = Math.acos(e_v.norm().dot(n().norm())) * rtd;
-                if (e_v[2] > 0 && ω > 180)
+                if (e_v[2] <= 0)
                 {
-                    ω -= 180;
+                    ω += 180;
                 }
 
                 // compute the true anomaly
                 ν = Math.acos(e_v.norm().dot(r0.norm())) * rtd;
-                if (r0.dot(v0) > 0)
+                if (r0.dot(v0) < 0)
                 {
-                    ν -= 180;
+                    ν += 180;
                 }
 
                 ω = isNaN(ω) ? 0 : ω;
