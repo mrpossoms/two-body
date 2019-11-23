@@ -66,14 +66,21 @@ function orbital_elements()
                         targ[val] = event.target.valueAsNumber;
                     }
                     proxy.compute[compute_call]();
-                    // compute_call();
                 };
 
-                proxy.control._set[prop] = {
-                    element: el,
-                    target: targ,
-                    prop: val,
-                };
+                if (!proxy.control._set[prop])
+                {
+                    proxy.control._set[prop] = {
+                        elements: [el],
+                        target: targ,
+                        prop: val,
+                    };
+                }
+                else
+                {
+                    proxy.control._set[prop].elements.push(el);
+                }
+
             }
 
             el.handler = new handler(this._proxy, prop);
@@ -83,8 +90,13 @@ function orbital_elements()
             for (var prop in this._set)
             {
                 const p = this._set[prop];
-                const el = p.element;
-                el.value = Math.round(p.target[p.prop] * 100) / 100;
+
+                for (var i = p.elements.length; i--;)
+                {
+                    const el = p.elements[i];
+                    el.value = Math.round(p.target[p.prop] * 100) / 100;
+                }
+
             }
         }
     };

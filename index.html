@@ -14,7 +14,7 @@ const k = {
 };
 
 
-var view_q = [0,0,0,1];
+var view_q = [].quat_rotation([1, 0, 0], Math.PI * 0.6);
 var cam = new g.web.gfx.camera();
 var mouse_down = false;
 var t = 0;
@@ -58,53 +58,16 @@ function do_on_change(e)
     }
 }
 
-function controls_for(properties)
-{
-    for (var i = properties.length; i--;)
-    {
-        const prop = properties[i];
-        const e = document.getElementById(prop);
-
-        if (!e) { console.error('no element ' + prop); continue; }
-
-        function handler(prop)
-        {
-            var chain = prop.replace('[', '.').replace(']', '').split('.');
-
-            var targ = window;
-            var val = chain[0];
-            for (var j = 1; j < chain.length; j++)
-            {
-                targ = targ[val];
-                val = chain[j];
-            }
-
-            e.oninput = function(event)
-            {
-                console.log(event.target.valueAsNumber);
-
-                if (typeof(targ[val]) === 'function')
-                {
-                    targ[val](event.target.valueAsNumber);
-                }
-                else
-                {
-                    targ[val] = event.target.valueAsNumber;
-                }
-
-                do_on_change(e);
-            };
-        }
-
-        e.handler = new handler(prop);
-    }
-}
-
 el.control.for_prop('el.i', 'i');
+el.control.for_prop('el.i-text', 'i');
 el.control.for_prop('el.e', 'e');
+el.control.for_prop('el.e-text', 'e');
 el.control.for_prop('el.ω', 'ω');
+el.control.for_prop('el.ω-text', 'ω');
 el.control.for_prop('el.Ω', 'Ω');
+el.control.for_prop('el.Ω-text', 'Ω');
 el.control.for_prop('el.ν', 'ν');
+el.control.for_prop('el.ν-text', 'ν');
 
 el.control.for_prop('el.r0[0]', 'r0[0]');
 el.control.for_prop('el.r0[1]', 'r0[1]');
@@ -116,7 +79,7 @@ el.control.for_prop('el.v0[2]', 'v0[2]');
 
 el.compute.elements_from_vectors();
 
-g.web.canvas(document.getElementsByTagName('canvas')[0], {fixed_size: true});
+g.web.canvas(document.getElementsByTagName('canvas')[0], {fixed_size: false});
 
 g.initialize(function ()
 {
@@ -332,30 +295,62 @@ g.start();
 <h1 class="text-light">Orbital Elements Calculator</h1>
 <section class="row">
 
-<canvas class="col" width=640 height=480></canvas>
+<canvas class="col" style="max-height: 640px;"></canvas>
 
-<section class="input-group col">
+<section class="col-md text-light m-2">
     <!-- Argument of periapsis -->
-    <label class="text-light" for="arg-of-periapsis">ω</label>
-    <input id="el.ω" type="range" class="custom-range" vectors_from_elements min="0" max="360" value="0">
+    <div class="row">
+        <h2 class="sm-col text-top" for="el.ω">ω</h2>
+        <p class="col">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus eu nulla porta, efficitur nisl eu, sollicitudin nulla.</p>
+    </div>
+    <div class="row">
+        <input id="el.ω-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
+        <input id="el.ω" type="range" class="col custom-range" vectors_from_elements min="0" max="360" value="0">
+    </div>
+    <hr class="border-light"></hr>
 
     <!-- true anomaly ν -->
-    <label class="text-light" for="inclination">ν</label>
-    <input id="el.ν" type="range" class="custom-range" vectors_from_elements min="0" max="360" value="0">
+    <div class="row">
+        <h2 class="sm-col text-top" for="el.ν">ν</h2>
+        <p class="col">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus eu nulla porta, efficitur nisl eu, sollicitudin nulla.</p>
+    </div>
+    <div class="row">
+        <input id="el.ν-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
+        <input id="el.ν" type="range" class="col custom-range" vectors_from_elements min="0" max="360" value="0">
+    </div>
+    <hr class="border-light"></hr>
 
     <!-- longitude of ascending node -->
-    <label class="text-light" for="inclination">Ω</label>
-    <input id="el.Ω" type="range" class="custom-range" vectors_from_elements min="0" max="360" value="0">
+    <div class="row">
+        <h2 class="sm-col text-top" for="el.Ω">Ω</h2>
+        <p class="col">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus eu nulla porta, efficitur nisl eu, sollicitudin nulla.</p>
+    </div>
+    <div class="row">
+        <input id="el.Ω-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
+        <input id="el.Ω" type="range" class="col custom-range" vectors_from_elements min="0" max="360" value="0">
+    </div>
+    <hr class="border-light"></hr>
 
     <!-- eccentricity -->
-    <label class="text-light" for="eccentricity">e</label>
-    <input id="el.e" type="range" class="custom-range" vectors_from_elements step="0.01" min="0" max="1" value="0">
+    <div class="row">
+        <h2 class="sm-col text-top" for="el.e">e</h2>
+        <p class="col">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus eu nulla porta, efficitur nisl eu, sollicitudin nulla.</p>
+    </div>
+    <div class="row">
+        <input id="el.e-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="1" step="0.1" value="0">
+        <input id="el.e" type="range" class="col custom-range" vectors_from_elements min="0" max="1" step="0.01" value="0">
+    </div>
+    <hr class="border-light"></hr>
 
     <!-- inclination -->
-    <label class="text-light" for="inclination">i</label>
-    <input id="el.i" type="range" class="custom-range" vectors_from_elements min="0" max="180" value="0">
-
-
+    <div class="row">
+        <h2 class="sm-col text-top" for="el.i">i</h2>
+        <p class="col">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus eu nulla porta, efficitur nisl eu, sollicitudin nulla.</p>
+    </div>
+    <div class="row">
+        <input id="el.i-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
+        <input id="el.i" type="range" class="col custom-range" vectors_from_elements min="0" max="180" value="0">
+    </div>
 </section>
 
 </section>

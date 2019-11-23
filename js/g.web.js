@@ -619,13 +619,21 @@ g.web = {
         opts = opts || {};
 		g.web._canvas = dom_element;
 
-        if (!opts.fixed_size)
+        if (opts.fill)
         {
             document.body.onresize = function(e) {
                 g.web._canvas.width = document.body.clientWidth;
                 g.web._canvas.height = document.body.clientHeight;
                 gl.viewport(0, 0, document.body.clientWidth, document.body.clientHeight);
             };
+        }
+        else if (!opts.fixed_size)
+        {
+           document.body.onresize = function(e) {
+               g.web._canvas.width = g.web._canvas.clientWidth;
+               g.web._canvas.height = g.web._canvas.clientHeight;
+               gl.viewport(0, 0, g.web._canvas.clientWidth, g.web._canvas.clientHeight);
+           };
         }
 
         g.web._canvas.requestPointerLock = g.web._canvas.requestPointerLock ||
