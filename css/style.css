@@ -21,10 +21,25 @@ p {
 i {
     font-weight: bold;
     cursor: pointer;
+    color: #ddd;
+}
+
+i:hover {
+    color: #fff;
+}
+
+h2, h3, footer {
+    color: #ddd;
+}
+
+
+.text-light-muted {
+    color: #bbb;
+    fill: #bbb;
 }
 
 .axis {
-    font-size: 2rem;
+    font-size: 1.5rem;
     width: 80px;
     border: 0;
     text-align: right;
