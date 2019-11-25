@@ -110,7 +110,7 @@ function orbital_elements()
                 const v_mag = v0.len();
                 const r_mag = r0.len();
                 const r_scl = v_mag * v_mag - µ / r_mag;
-                e_v = r0.mul(r_scl).sub(v0.mul(r0.dot(v0)));
+                e_v.assign(r0.mul(r_scl).sub(v0.mul(r0.dot(v0))));
                 e = e_v.len();
             }
         },

@@ -5,6 +5,10 @@
 <script type="text/javascript" src="js/g.js"></script>
 <script type="text/javascript" src="js/g.web.js"></script>
 <script type="text/javascript" src="js/elements.js"></script>
+<!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script> -->
+<!-- <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/latest.js?config=AM_CHTML"></script>
+<!-- <script type="text/javascript" src="js/mathjax.js"></script> -->
 <script type="text/javascript">
 
 const k = {
@@ -14,7 +18,7 @@ const k = {
 };
 
 
-var view_q = [].quat_rotation([1, 0, 0], Math.PI * 0.6);
+var view_q = [].quat_rotation([0, 0, 1], -Math.PI / 4).quat_mul([].quat_rotation([1, 0, 0], Math.PI * 0.6));
 var cam = new g.web.gfx.camera();
 var mouse_down = false;
 var t = 0;
@@ -76,6 +80,10 @@ el.control.for_prop('el.r0[2]', 'r0[2]');
 el.control.for_prop('el.v0[0]', 'v0[0]');
 el.control.for_prop('el.v0[1]', 'v0[1]');
 el.control.for_prop('el.v0[2]', 'v0[2]');
+
+el.control.for_prop('el.e_v[0]', 'e_v[0]');
+el.control.for_prop('el.e_v[1]', 'e_v[1]');
+el.control.for_prop('el.e_v[2]', 'e_v[2]');
 
 el.compute.elements_from_vectors();
 
@@ -301,7 +309,9 @@ g.start();
     <!-- Argument of periapsis -->
     <div class="row">
         <h2 class="sm-col text-top" for="el.ω">ω</h2>
-        <p class="col">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus eu nulla porta, efficitur nisl eu, sollicitudin nulla.</p>
+        <p class="col">
+        Is the <i>argument of periapsis</i>, meaning the angle from the <i>line of the ascending node</i> at which the satellite is closest to focus of the orbit.
+        </p>
     </div>
     <div class="row">
         <input id="el.ω-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
@@ -312,7 +322,9 @@ g.start();
     <!-- true anomaly ν -->
     <div class="row">
         <h2 class="sm-col text-top" for="el.ν">ν</h2>
-        <p class="col">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus eu nulla porta, efficitur nisl eu, sollicitudin nulla.</p>
+        <p class="col">
+        Is the <i>true anomaly</i>. The true anomaly is the angle from the <i>line of the ascending node</i> at which the satellite was first observed. `sum_(i=1)^n i^3=((n(n+1))/2)^2`
+        </p>
     </div>
     <div class="row">
         <input id="el.ν-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
@@ -323,7 +335,9 @@ g.start();
     <!-- longitude of ascending node -->
     <div class="row">
         <h2 class="sm-col text-top" for="el.Ω">Ω</h2>
-        <p class="col">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus eu nulla porta, efficitur nisl eu, sollicitudin nulla.</p>
+        <p class="col">
+        Is the <i>longitude of the ascending node</i> the angle from the geocentric basis vector <b>I</b> to the <i>line of the ascending node</i>.
+        </p>
     </div>
     <div class="row">
         <input id="el.Ω-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
@@ -334,7 +348,9 @@ g.start();
     <!-- eccentricity -->
     <div class="row">
         <h2 class="sm-col text-top" for="el.e">e</h2>
-        <p class="col">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus eu nulla porta, efficitur nisl eu, sollicitudin nulla.</p>
+        <p class="col">
+        Is the <i>eccentricity</i> and defines the shape of the orbit. 0 <i>eccentricity</i> means the orbit is perfectly circular. As the <i>eccentricity</i> approaches 1 the orbital path becomes more and more elliptical.
+        </p>
     </div>
     <div class="row">
         <input id="el.e-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="1" step="0.1" value="0">
@@ -345,7 +361,7 @@ g.start();
     <!-- inclination -->
     <div class="row">
         <h2 class="sm-col text-top" for="el.i">i</h2>
-        <p class="col">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus eu nulla porta, efficitur nisl eu, sollicitudin nulla.</p>
+        <p class="col">is the <i>inclination</i> and defines the angle between the <i>angular momentum vector</i> and the basis vector <i>K</i>.</p>
     </div>
     <div class="row">
         <input id="el.i-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
@@ -355,8 +371,9 @@ g.start();
 
 </section>
 
-<!-- R0 vector -->
+
 <section class="row">
+<!-- R0 vector -->
 <div class="col">
     <h2 class="float-left text-light text-right">r0 = {</h2>
 
@@ -370,10 +387,8 @@ g.start();
 
     <h2 class="float-left text-light text-left">}</h2>
 </div>
-</section>
 
 <!-- V vector -->
-<section class="row">
 <div class="col">
     <h2 class="float-left text-light text-right">v0 = {</h2>
 
@@ -387,8 +402,41 @@ g.start();
 
     <h2 class="float-left text-light text-left">}</h2>
 </div>
+
 </section>
 
+
+<section class="row">
+<!-- h vector -->
+<div class="col">
+    <h2 class="float-left text-light text-right">h = {</h2>
+
+    <input id="el.h()[0]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="0">
+    <h2 class="float-left text-light">, </h2>
+
+    <input id="el.h()[1]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="0">
+    <h2 class="float-left text-light">, </h2>
+
+    <input id="el.h()[2]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="1">
+
+    <h2 class="float-left text-light text-left">}</h2>
+</div>
+
+<!-- e vector -->
+<div class="col">
+    <h2 class="float-left text-light text-right">e = {</h2>
+
+    <input id="el.e_v[0]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="0">
+    <h2 class="float-left text-light">, </h2>
+
+    <input id="el.e_v[1]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="0">
+    <h2 class="float-left text-light">, </h2>
+
+    <input id="el.e_v[2]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="1">
+
+    <h2 class="float-left text-light text-left">}</h2>
+</div>
+</section>
 
 </body>
 </html>
