@@ -20,11 +20,12 @@ p {
 
 i {
     font-weight: bold;
+    cursor: pointer;
 }
 
 .axis {
     font-size: 2rem;
-    width: 150px;
+    width: 80px;
     border: 0;
     text-align: right;
 }

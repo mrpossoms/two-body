@@ -11,12 +11,30 @@
 <!-- <script type="text/javascript" src="js/mathjax.js"></script> -->
 <script type="text/javascript">
 
+
+
 const k = {
+    WHITE: [1, 1, 1, 1],
     mouse: {
         sensitivity: 0.01,
     },
 };
 
+var highlight_map = {
+    I: false,
+    J: false,
+    K: false,
+    e: false,
+    i: false,
+    ω: false,
+    Ω: false,
+    l: false,
+    ν: false,
+    n: false,
+    r0: false,
+    v0: false,
+    h: false,
+};
 
 var view_q = [].quat_rotation([0, 0, 1], -Math.PI / 4).quat_mul([].quat_rotation([1, 0, 0], Math.PI * 0.6));
 var cam = new g.web.gfx.camera();
@@ -26,6 +44,24 @@ var el = new orbital_elements();
 
 
 function element(id) { return document.getElementById(id); }
+
+function register_highlights(map)
+{
+    const italisizeds = document.getElementsByTagName('i');
+    for (var k in italisizeds)
+    {
+        var i = italisizeds[k];
+        for (var key in i.attributes)
+        {
+            const attr = i.attributes[key];
+            if (attr.name === 'highlight')
+            {
+                i.onmouseover = ()=>{ map[attr.value] = true; }
+                i.onmouseout = ()=>{ map[attr.value] = false; }
+            }
+        }
+    }
+}
 
 function on_load()
 {
@@ -86,6 +122,8 @@ el.control.for_prop('el.e_v[1]', 'e_v[1]');
 el.control.for_prop('el.e_v[2]', 'e_v[2]');
 
 el.compute.elements_from_vectors();
+
+register_highlights(highlight_map);
 
 g.web.canvas(document.getElementsByTagName('canvas')[0], {fixed_size: false});
 
@@ -201,13 +239,10 @@ function draw_skybox()
 function draw_basis()
 {
     gl.lineWidth(10);
-    g.web.assets['mesh/basis'].using_shader('basic_color')
-                             .with_attribute({name:'a_position', buffer: 'positions', components: 3})
-                             .with_attribute({name:'a_color', buffer: 'colors', components: 4})
-                             .set_uniform('u_proj').mat4(cam.projection())
-                             .set_uniform('u_view').mat4(view_q.quat_to_matrix().mat_mul(cam.view()))
-                             .set_uniform('u_model').mat4([].scale(2))
-                             .draw_lines();
+
+    draw_line([0, 0, 0], [1.25, 0, 0], highlight_map.I ? k.WHITE : [1, 0, 0, 1]);
+    draw_line([0, 0, 0], [0, 1.25, 0], highlight_map.J ? k.WHITE : [0, 1, 0, 1]);
+    draw_line([0, 0, 0], [0, 0, 1.25], highlight_map.K ? k.WHITE : [0, 0, 1, 1]);
 }
 
 function draw_line(p0, p1, color)
@@ -278,17 +313,15 @@ g.web.draw(function (dt)
 
     gl.disable(gl.DEPTH_TEST);
     draw_line([0, 0, 0], el.r(t), [1, 0, 1, 1]);
-    draw_line([0, 0, 0], el.h(t), [1, 1, 0 , 1]);
+    draw_line([0, 0, 0], el.h(t),  highlight_map.h ? k.WHITE : [1, 1, 0 , 1]);
     draw_line(el.r(t), el.v(t).add(el.r(t)), [0, 1, 1, 1]);
 
     draw_line([0, 0, 0], el.r0, [1, 0, 1, 0.25]);
-    // draw_line(el.r0, el.r0.add(el.v0), [0, 1, 1, 0.25]);
 
-    draw_line([0, 0, 0], el.n().norm(), [0, 0, 1, 0.75]);
-    draw_line([0, 0, 0], el.e_v, [0, 1, 1, 0.75]);
+    draw_line([0, 0, 0], el.n().norm(),  highlight_map.n ? k.WHITE : [0, 0, 1, 0.75]);
+    draw_line([0, 0, 0], el.e_v,  highlight_map.e ? k.WHITE : [0, 1, 1, 0.75]);
     gl.enable(gl.DEPTH_TEST);
-    // draw_line([0, 0, 0], el.v0, [0, 1, 0 , 0.25]);
-    // draw_line([0, 0, 0], el.e_v, [1, 1, 1 , 1]);
+
 
     t += dt;
 });
@@ -310,7 +343,7 @@ g.start();
     <div class="row">
         <h2 class="sm-col text-top" for="el.ω">ω</h2>
         <p class="col">
-        Is the <i>argument of periapsis</i>, meaning the angle from the <i>line of the ascending node</i> at which the satellite is closest to focus of the orbit.
+        Is the <i highlight="ω">argument of periapsis</i>, meaning the angle from the <i highlight="n">line of the ascending node</i> at which the satellite is closest to focus of the orbit. It is defined as `ω = cos^-1(K*h)` where `h` is the normalized <i highlight="h">angular momentum vector</i> and <i highlight="K">`K`</i> is the north pointing basis vector.
         </p>
     </div>
     <div class="row">
@@ -323,7 +356,7 @@ g.start();
     <div class="row">
         <h2 class="sm-col text-top" for="el.ν">ν</h2>
         <p class="col">
-        Is the <i>true anomaly</i>. The true anomaly is the angle from the <i>line of the ascending node</i> at which the satellite was first observed. `sum_(i=1)^n i^3=((n(n+1))/2)^2`
+        Is the <i>true anomaly</i>. The true anomaly is the angle from the <i highlight="n">line of the ascending node</i> at which the satellite was first observed. The true anomaly is defined as `ν = cos^-1(n*e)` where both `n` is the normalized <i highlight="n">line of the ascending node</i> and `e` is the normalized <i highlight="e">eccintricity</i> vector.
         </p>
     </div>
     <div class="row">
@@ -336,7 +369,7 @@ g.start();
     <div class="row">
         <h2 class="sm-col text-top" for="el.Ω">Ω</h2>
         <p class="col">
-        Is the <i>longitude of the ascending node</i> the angle from the geocentric basis vector <b>I</b> to the <i>line of the ascending node</i>.
+        Is the <i>longitude of the ascending node</i> the angle from the geocentric basis vector <i highlight="I">`I`</i> to the <i highlight="n">line of the ascending node</i>. 
         </p>
     </div>
     <div class="row">
@@ -349,7 +382,7 @@ g.start();
     <div class="row">
         <h2 class="sm-col text-top" for="el.e">e</h2>
         <p class="col">
-        Is the <i>eccentricity</i> and defines the shape of the orbit. 0 <i>eccentricity</i> means the orbit is perfectly circular. As the <i>eccentricity</i> approaches 1 the orbital path becomes more and more elliptical.
+        Is the <i highlight="e">eccentricity</i> and defines the shape of the orbit. 0 <i highlight="e">eccentricity</i> means the orbit is perfectly circular. As the <i highlight="e">eccentricity</i> approaches 1 the orbital path becomes more and more elliptical.
         </p>
     </div>
     <div class="row">
@@ -361,7 +394,7 @@ g.start();
     <!-- inclination -->
     <div class="row">
         <h2 class="sm-col text-top" for="el.i">i</h2>
-        <p class="col">is the <i>inclination</i> and defines the angle between the <i>angular momentum vector</i> and the basis vector <i>K</i>.</p>
+        <p class="col">is the <i>inclination</i> and defines the angle between the <i highlight="h">angular momentum vector</i> and the basis vector <i>K</i>.</p>
     </div>
     <div class="row">
         <input id="el.i-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
