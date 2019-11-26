@@ -101,7 +101,7 @@ g.web = {
             {
                 fov = fov || Math.PI / 2;
                 near = near || 0.1;
-                far = far || 100;
+                far = far || 1000;
 
                 this._proj = [].perspective(fov, g.web.gfx.aspect(), near, far);
 

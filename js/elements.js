@@ -20,6 +20,7 @@ function orbital_elements()
 
     this.r0 = this.I.slice();
     this.v0 = this.J.slice();
+    this.h = this.K.slice();
 
     this.control = {
         _proxy: this,
@@ -93,8 +94,9 @@ function orbital_elements()
 
                 for (var i = p.elements.length; i--;)
                 {
+                    var val = p.target[p.prop];
                     const el = p.elements[i];
-                    el.value = Math.round(p.target[p.prop] * 100) / 100;
+                    el.value = Math.round(val * 100) / 100;
                 }
 
             }
@@ -119,8 +121,11 @@ function orbital_elements()
         {
             with (this._proxy)
             {
+                // angular momentum
+                h.assign(r0.cross(v0));
+
                 // compute inclination
-                i = Math.acos(h().norm().dot(K)) * rtd;
+                i = Math.acos(h.norm().dot(K)) * rtd;
 
                 // compute eccentricity
                 compute.eccentricity();
@@ -166,6 +171,7 @@ function orbital_elements()
 
                 r0.assign(R.mat_mul(r_p).flatten());
                 v0.assign(R.mat_mul(v_p).flatten());
+                h.assign(r0.cross(v0));
 
                 compute.eccentricity();
 
@@ -201,16 +207,11 @@ function orbital_elements()
         }
     };
 
-    this.h = function(t)
-    {
-        return this.r0.cross(this.v0);
-    };
-
     this.p = function()
     {
         with (this)
         {
-            return Math.pow(h().len(), 2) / µ;
+            return Math.pow(h.len(), 2) / µ;
         }
     };
 
@@ -218,7 +219,7 @@ function orbital_elements()
     {
         with (this)
         {
-            return K.cross(h());
+            return K.cross(h);
         }
     };
 

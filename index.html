@@ -122,6 +122,10 @@ el.control.for_prop('el.e_v[0]', 'e_v[0]');
 el.control.for_prop('el.e_v[1]', 'e_v[1]');
 el.control.for_prop('el.e_v[2]', 'e_v[2]');
 
+el.control.for_prop('el.h[0]', 'h[0]');
+el.control.for_prop('el.h[1]', 'h[1]');
+el.control.for_prop('el.h[2]', 'h[2]');
+
 el.compute.elements_from_vectors();
 
 register_highlights(highlight_map);
@@ -312,10 +316,12 @@ g.web.draw(function (dt)
 
     gl.disable(gl.DEPTH_TEST);
     draw_line([0, 0, 0], el.r(t), [1, 0, 1, 1]);
-    draw_line([0, 0, 0], el.h(t),  highlight_map.h ? k.WHITE : [1, 1, 0 , 1], highlight_map.h ? 5 : 2);
+    draw_line([0, 0, 0], el.h,  highlight_map.h ? k.WHITE : [1, 1, 0 , 1], highlight_map.h ? 5 : 2);
     draw_line(el.r(t), el.v(t).add(el.r(t)), [0, 1, 1, 1]);
 
-    draw_line([0, 0, 0], el.r0, [1, 0, 1, 0.25]);
+    draw_line([0, 0, 0], el.r0, highlight_map.r0 ? k.WHITE : [1, 0, 1, 0.25]);
+
+    draw_line(el.r0, el.r0.add(el.v0), highlight_map.v0 ? k.WHITE : [0, 1, 1, 0.25]);
 
     draw_line([0, 0, 0], el.n().norm(),  highlight_map.n ? k.WHITE : [0, 0, 1, 0.75], highlight_map.n ? 5 : 2);
     draw_line([0, 0, 0], el.e_v,  highlight_map.e ? k.WHITE : [0, 1, 1, 0.75], highlight_map.e ? 5 : 2);
@@ -381,13 +387,13 @@ g.start();
     <div class="col">
         <h3 class="float-left text-light text-right">h = {</h3>
 
-        <input id="el.h()[0]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="0">
+        <input id="el.h[0]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="0">
         <h3 class="float-left text-light">, </h3>
 
-        <input id="el.h()[1]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="0">
+        <input id="el.h[1]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="0">
         <h3 class="float-left text-light">, </h3>
 
-        <input id="el.h()[2]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="1">
+        <input id="el.h[2]" class="float-left text-light bg-dark axis" elements_from_vectors type="number" step="0.1" value="1">
 
         <h3 class="float-left text-light">}</h3>
     </div>
@@ -429,7 +435,7 @@ g.start();
     <div class="row">
         <h2 class="sm-col text-top" for="el.ν">ν</h2>
         <p class="col">
-        Is the <i>true anomaly</i>. The true anomaly is the angle from the <i highlight="n">line of the ascending node</i> at which the satellite was first observed. The true anomaly is defined as `ν = cos^-1(n*e)` where both `n` is the normalized <i highlight="n">line of the ascending node</i> and `e` is the normalized <i highlight="e">eccintricity</i> vector.
+        Is the <i>true anomaly</i>. The true anomaly is the angle from the <i highlight="n">line of the ascending node</i> at which the satellite was first observed. The true anomaly is defined as `ν = cos^-1(r_0*e)` where both `r_0` is the normalized <i highlight="r0">position vector</i> and `e` is the normalized <i highlight="e">eccintricity</i> vector.
         </p>
     </div>
     <div class="row">
@@ -467,7 +473,7 @@ g.start();
     <!-- inclination -->
     <div class="row">
         <h2 class="sm-col text-top" for="el.i">i</h2>
-        <p class="col">is the <i>inclination</i> and defines the angle between the <i highlight="h">angular momentum vector</i> and the basis vector <i>K</i>.</p>
+        <p class="col">is the <i>inclination</i> and defines the angle between the <i highlight="h">angular momentum vector</i> and the basis vector <i highlight="K">K</i>.</p>
     </div>
     <div class="row">
         <input id="el.i-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
