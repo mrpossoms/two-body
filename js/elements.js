@@ -17,6 +17,7 @@ function orbital_elements()
     this.Ω = 0; // longitude of the ascending node
     this.l = 0; // longitude of periapsis
     this.ν = 0; // true anomaly
+    this.p = 1; // semi-major axis
 
     this.r0 = this.I.slice();
     this.v0 = this.J.slice();
@@ -96,7 +97,7 @@ function orbital_elements()
                 {
                     var val = p.target[p.prop];
                     const el = p.elements[i];
-                    el.value = Math.round(val * 100) / 100;
+                    el.value = Math.round(val * 1000) / 1000;
                 }
 
             }
@@ -112,7 +113,8 @@ function orbital_elements()
                 const v_mag = v0.len();
                 const r_mag = r0.len();
                 const r_scl = v_mag * v_mag - µ / r_mag;
-                e_v.assign(r0.mul(r_scl).sub(v0.mul(r0.dot(v0))));
+                e_v.assign((r0.mul(r_scl).sub(v0.mul(r0.dot(v0)))).mul(1 / µ));
+                e_v.round(3);
                 e = e_v.len();
             }
         },
@@ -124,6 +126,9 @@ function orbital_elements()
                 // angular momentum
                 h.assign(r0.cross(v0));
 
+                // semi major axis
+                p = Math.pow(h.len(), 2.0) / µ;
+
                 // compute inclination
                 i = Math.acos(h.norm().dot(K)) * rtd;
 
@@ -132,14 +137,14 @@ function orbital_elements()
 
                 // compute the longitude of the ascending node
                 Ω = Math.acos(n().norm().dot(I)) * rtd;
-                if (n()[1] <= 0)
+                if (n()[1] < 0)
                 {
                     Ω += 180;
                 }
 
                 // compute the argument of periapsis
                 ω = Math.acos(e_v.norm().dot(n().norm())) * rtd;
-                if (e_v[2] <= 0)
+                if (e_v[2] < 0)
                 {
                     ω += 180;
                 }
@@ -165,9 +170,9 @@ function orbital_elements()
                 const R = M_perifocal_to_geo();
 
                 const _ν = isNaN(ν) ? 0 : ν;
-                const r_mag = p() / (1 + e * Math.cos(_ν * dtr)); // scalar length of perifocal 'r' vector
+                const r_mag = p / (1 + e * Math.cos(_ν * dtr)); // scalar length of perifocal 'r' vector
                 const r_p = [r_mag * Math.cos(_ν * dtr), r_mag * Math.sin(_ν * dtr), 0];              // perifocal 'r' vector
-                const v_p = [-Math.sin(_ν * dtr), e + Math.cos(_ν * dtr), 0].mul(Math.sqrt(µ / p())); // perifocal 'v' vector
+                const v_p = [-Math.sin(_ν * dtr), e + Math.cos(_ν * dtr), 0].mul(Math.sqrt(µ / p)); // perifocal 'v' vector
 
                 r0.assign(R.mat_mul(r_p).flatten());
                 v0.assign(R.mat_mul(v_p).flatten());
@@ -188,8 +193,19 @@ function orbital_elements()
             const _ν = isNaN(ν) ? 0 : ν;
             t += _ν * dtr;
 
-            const r_mag = p() / (1 + e * Math.cos(t)); // scalar length of perifocal 'r' vector
+            const r_mag = p / (1 + e * Math.cos(t)); // scalar length of perifocal 'r' vector
             const r_p = [r_mag * Math.cos(t), r_mag * Math.sin(t), 0];              // perifocal 'r' vector
+
+            return M_perifocal_to_geo().mat_mul(r_p);
+        }
+    };
+
+    this.periapsis = function()
+    {
+        with (this)
+        {
+            const r_mag = p / (1 + e * Math.cos(0)); // scalar length of perifocal 'r' vector
+            const r_p = [r_mag * Math.cos(0), r_mag * Math.sin(0), 0];              // perifocal 'r' vector
 
             return M_perifocal_to_geo().mat_mul(r_p);
         }
@@ -201,17 +217,9 @@ function orbital_elements()
         {
             const _ν = isNaN(ν) ? 0 : ν;
             t += _ν * dtr;
-            const v_p = [-Math.sin(t), e + Math.cos(t), 0].mul(Math.sqrt(µ / p())); // perifocal 'v' vector
+            const v_p = [-Math.sin(t), e + Math.cos(t), 0].mul(Math.sqrt(µ / p)); // perifocal 'v' vector
 
             return M_perifocal_to_geo().mat_mul(v_p);
-        }
-    };
-
-    this.p = function()
-    {
-        with (this)
-        {
-            return Math.pow(h.len(), 2) / µ;
         }
     };
 

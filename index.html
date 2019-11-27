@@ -103,6 +103,7 @@ el.control.for_prop('el.i', 'i');
 el.control.for_prop('el.i-text', 'i');
 el.control.for_prop('el.e', 'e');
 el.control.for_prop('el.e-text', 'e');
+el.control.for_prop('el.p-text', 'p');
 el.control.for_prop('el.ω', 'ω');
 el.control.for_prop('el.ω-text', 'ω');
 el.control.for_prop('el.Ω', 'Ω');
@@ -208,7 +209,7 @@ g.web.pointer.on_release(function (e) { mouse_down = false; });
 
 function update_camera(camera, focus, q, dist, dt)
 {
-    camera.position = [0, 0, el.p() * 2];
+    camera.position = [0, 0, el.p * 2];
     camera.look_at(camera.position, [0, 0, 0], [0, 1, 0]);
 }
 
@@ -243,9 +244,9 @@ function draw_skybox()
 
 function draw_basis()
 {
-    draw_line([0, 0, 0], [1.25, 0, 0], highlight_map.I ? k.WHITE : [1, 0, 0, 1], 10);
-    draw_line([0, 0, 0], [0, 1.25, 0], highlight_map.J ? k.WHITE : [0, 1, 0, 1], 10);
-    draw_line([0, 0, 0], [0, 0, 1.25], highlight_map.K ? k.WHITE : [0, 0, 1, 1], 10);
+    draw_line([0, 0, 0], [1, 0, 0], highlight_map.I ? k.WHITE : [1, 0, 0, 0.5], 10);
+    draw_line([0, 0, 0], [0, 1, 0], highlight_map.J ? k.WHITE : [0, 1, 0, 0.5], 10);
+    draw_line([0, 0, 0], [0, 0, 1], highlight_map.K ? k.WHITE : [0, 0, 1, 0.5], 10);
 }
 
 function draw_line(p0, p1, color, width)
@@ -318,6 +319,8 @@ g.web.draw(function (dt)
     draw_line([0, 0, 0], el.r(t), [1, 0, 1, 1]);
     draw_line([0, 0, 0], el.h,  highlight_map.h ? k.WHITE : [1, 1, 0 , 1], highlight_map.h ? 5 : 2);
     draw_line(el.r(t), el.v(t).add(el.r(t)), [0, 1, 1, 1]);
+
+    draw_line([0, 0, 0], el.periapsis().cross(el.h).norm().mul(-el.p), highlight_map.p ? k.WHITE : [1, 1, 1, 0.25]);
 
     draw_line([0, 0, 0], el.r0, highlight_map.r0 ? k.WHITE : [1, 0, 1, 0.25]);
 
@@ -421,9 +424,9 @@ g.start();
     <!-- Argument of periapsis -->
     <div class="row">
         <h2 class="sm-col text-top" for="el.ω">ω</h2>
-        <p class="col">
-        Is the <i highlight="ω">argument of periapsis</i>, meaning the angle from the <i highlight="n">line of the ascending node</i> at which the satellite is closest to focus of the orbit. It is defined as `ω = cos^-1(K*h)` where `h` is the normalized <i highlight="h">angular momentum vector</i> and <i highlight="K">`K`</i> is the north pointing basis vector.
-        </p>
+        <div class="col">
+        Is the <i highlight="ω">argument of periapsis</i>, meaning the angle from the <i highlight="n">line of the ascending node</i> at which the satellite is closest to focus of the orbit. It is defined as `ω = cos^-1(n*e)` where `n` is the normalized <i highlight="n">line of the ascending node</i> and <i highlight="e">`e`</i> is the normalized eccentricity vector.
+        </div>
     </div>
     <div class="row">
         <input id="el.ω-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
@@ -434,9 +437,9 @@ g.start();
     <!-- true anomaly ν -->
     <div class="row">
         <h2 class="sm-col text-top" for="el.ν">ν</h2>
-        <p class="col">
-        Is the <i>true anomaly</i>. The true anomaly is the angle from the <i highlight="n">line of the ascending node</i> at which the satellite was first observed. The true anomaly is defined as `ν = cos^-1(r_0*e)` where both `r_0` is the normalized <i highlight="r0">position vector</i> and `e` is the normalized <i highlight="e">eccintricity</i> vector.
-        </p>
+        <div class="col">
+        Is the <i>true anomaly</i>. The true anomaly is the angle from the <i highlight="n">line of the ascending node</i> at which the satellite was first observed. The true anomaly is defined as `ν = cos^-1(r_0*e)` where both `r_0` is the normalized <i highlight="r0">position vector</i> and `e` is the normalized <i highlight="e">eccentricity</i> vector.
+        </div>
     </div>
     <div class="row">
         <input id="el.ν-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
@@ -447,9 +450,9 @@ g.start();
     <!-- longitude of ascending node -->
     <div class="row">
         <h2 class="sm-col text-top" for="el.Ω">Ω</h2>
-        <p class="col">
+        <div class="col">
         Is the <i>longitude of the ascending node</i> the angle from the geocentric basis vector <i highlight="I">`I`</i> to the <i highlight="n">line of the ascending node</i>.
-        </p>
+        </div>
     </div>
     <div class="row">
         <input id="el.Ω-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
@@ -460,9 +463,15 @@ g.start();
     <!-- eccentricity -->
     <div class="row">
         <h2 class="sm-col text-top" for="el.e">e</h2>
-        <p class="col">
-        Is the <i highlight="e">eccentricity</i> and defines the shape of the orbit. 0 <i highlight="e">eccentricity</i> means the orbit is perfectly circular. As the <i highlight="e">eccentricity</i> approaches 1 the orbital path becomes more and more elliptical.
-        </p>
+        <div class="col">
+        Is the <i highlight="e">eccentricity</i> and defines the shape of the orbit. 0 <i highlight="e">eccentricity</i> means the orbit is perfectly circular. As the <i highlight="e">eccentricity</i> approaches 1 the orbital path becomes more and more elliptical. The <i highlight="e">eccentricity vector</i> is defined as
+        <br/>
+        <i highlight="e">`e = 1/µ[(||v_0||^2 - µ/||r_0||)r_0 - (r_0 * v_0)v_0]`</i>
+        <br/>
+        where `r_0` and `v_0` are the
+        position and velocity vectors respectively at the time of observation. `µ` is the gravitational parameter for the orbited body. In this case here, `µ` is set as 1 because we are using canonical units of time and space.
+
+        </div>
     </div>
     <div class="row">
         <input id="el.e-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="1" step="0.1" value="0">
@@ -470,10 +479,26 @@ g.start();
     </div>
     <hr class="border-light"></hr>
 
+    <!-- semi-latus rectum -->
+    <div class="row">
+        <h2 class="sm-col text-top" for="el.p">p</h2>
+        <div class="col">
+        Is the <i highlight="p">semi-latus rectum</i>, which is a line drawn perpendicular to the periapsis, and whose length extends from the focus, or central body of the orbit to the orbital path. The <i highlight="p">semi-latus rectum vector</i> is defined as
+        <br/>
+        <i highlight="p">`p = ||h||^2/µ`</i>
+        <br/>
+        where `h` is the angular momentum vector, and `µ` is the gravitational parameter for the orbited body. In this case here, `µ` is set as 1 because we are using canonical units of time and space.
+        </div>
+    </div>
+    <div class="row">
+        <input id="el.p-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements step="0.1" value="0">
+    </div>
+    <hr class="border-light"></hr>
+
     <!-- inclination -->
     <div class="row">
         <h2 class="sm-col text-top" for="el.i">i</h2>
-        <p class="col">is the <i>inclination</i> and defines the angle between the <i highlight="h">angular momentum vector</i> and the basis vector <i highlight="K">K</i>.</p>
+        <div class="col">is the <i>inclination</i> and defines the angle between the <i highlight="h">angular momentum vector</i> and the basis vector <i highlight="K">K</i>.</div>
     </div>
     <div class="row">
         <input id="el.i-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
@@ -488,7 +513,7 @@ g.start();
 <footer>
 <center class="text-light-muted">
     <a href="https://github.com/mrpossoms/two-body">
-        <svg class="octicon octicon-mark-github v-align-middle" height="32" viewBox="0 0 16 16" version="1.1" width="32" aria-hidden="true"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+        <svg class="text-light-muted" height="32" viewBox="0 0 16 16" version="1.1" width="32" aria-hidden="true"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
     </a>
 
     </br>

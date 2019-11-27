@@ -141,6 +141,29 @@ Array.prototype.mul = function(v)
 	return w;
 };
 
+Array.prototype.round = function(places)
+{
+	places = Math.pow(10, (places || 1));
+
+	if (this.is_matrix())
+	{
+		const dims = this.mat_dims();
+		for (var r = dims[0]; r--;)
+		{
+			for (var c = dims[1]; c--;)
+			{
+				this[r][c] = Math.round(this[r][c] * places) / places;
+			}
+		}
+	}
+	else
+	{
+		for (var i = this.length; i--;) this[i] = Math.round(this[i] * places) / places;
+	}
+
+	return this;
+};
+
 Array.prototype.pow = function(ex)
 {
 	var w = new Array(this.length);
