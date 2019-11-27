@@ -1,6 +1,6 @@
 # Orbital Elements Calculator
 
-<center><img src="https://raw.github.com/mrpossoms/two-body/raw/master/.demo.gif"/></center>
+<center><img src="https://github.com/mrpossoms/two-body/raw/master/.demo.gif"/></center>
 
 ## What is it?
 For a long time, I've wanted to understand the fundamentals of orbital mechanics and in doing so, I though I would create a tool to help visualize simple two-body orbits given their Keplarian orbital parameters, or geocentric position and velocity vectors. This tool allows you to adjust those parameters and watch how it affects others, and the overall orbit dynamically.
