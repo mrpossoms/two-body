@@ -6,4 +6,4 @@ var http = require('http').Server(app);
 // express setup
 app.use(express.static(path.join(__dirname, '')));
 
-http.listen(3001, function() { console.log('Running!'); });
+http.listen(process.env['PORT'] || 3001, function() { console.log('Running!'); });
