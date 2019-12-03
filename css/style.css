@@ -24,6 +24,10 @@ h2, h3, footer {
     color: #ddd;
 }
 
+a {
+	color: #fff;
+}
+
 
 .text-light-muted {
     color: #bbb;
@@ -34,6 +38,7 @@ h2, h3, footer {
     border-style: solid;
     border-color: #bbbbbb;
     border-width: 1px;
+    border-radius: 5px;
     padding: 2px;
 }
 

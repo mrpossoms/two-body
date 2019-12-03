@@ -19,8 +19,8 @@ function orbital_elements()
     this.ν = 0; // true anomaly
     this.p = 1; // semi-major axis
 
-    this.r0 = this.I.slice();
-    this.v0 = this.J.slice();
+    this.r0 = [1, 0, 0.2];
+    this.v0 = [0, 1.2, 0];
     this.h = this.K.slice();
 
     this.control = {
