@@ -30,10 +30,18 @@ h2, h3, footer {
     fill: #bbb;
 }
 
+.slider-text {
+    border-style: solid;
+    border-color: #bbbbbb;
+    border-width: 1px;
+    padding: 2px;
+}
+
 .axis {
     font-size: 1.5rem;
     width: 100px;
     border: 0;
+    border-style: ;
     text-align: right;
 }
 

@@ -579,10 +579,15 @@ g.web = {
 
 		on_press: function(on_press_func)
 		{
-			g.web._canvas.ontouchstart = g.web._canvas.onmousedown = function(e)
+            g.web._canvas.ontouchstart = function(e)
             {
                 const t = e.touches[0];
                 g.web.pointer._last = [ t.clientX, t.clientY ];
+                on_press_func(e);
+            };
+
+			g.web._canvas.onmousedown = function(e)
+            {
                 on_press_func(e);
             };
 		},
@@ -653,8 +658,6 @@ g.web = {
         document.exitPointerLock = document.exitPointerLock ||
                                    document.mozExitPointerLock ||
                                    function(){};
-
-        g.web._canvas.requestPointerLock();
 
 		return this;
 	},

@@ -48,20 +48,25 @@ function element(id) { return document.getElementById(id); }
 
 function register_highlights(map)
 {
-    const italisizeds = document.getElementsByTagName('i');
-    for (var k in italisizeds)
+    function for_collection(set)
     {
-        var i = italisizeds[k];
-        for (var key in i.attributes)
+        for (var k in set)
         {
-            const attr = i.attributes[key];
-            if (attr.name === 'highlight')
+            var i = set[k];
+            for (var key in i.attributes)
             {
-                i.onmouseover = ()=>{ map[attr.value] = true; }
-                i.onmouseout = ()=>{ map[attr.value] = false; }
+                const attr = i.attributes[key];
+                if (attr.name === 'highlight')
+                {
+                    i.onmouseover = ()=>{ map[attr.value] = true; }
+                    i.onmouseout = ()=>{ map[attr.value] = false; }
+                }
             }
         }
     }
+
+    for_collection(document.getElementsByTagName('i'));
+    for_collection(document.getElementsByTagName('section'));
 }
 
 function on_load()
@@ -352,7 +357,7 @@ g.start();
 <div class="row m-2">
 
     <!-- R0 vector -->
-    <section class="row" style="width: 100%">
+    <section class="row" style="width: 100%" highlight="r0">
     <div class="col" title="This is the position vector at which the satellite was observed at time 0.">
         <h2 class="float-left text-light text-right">r0 = {</h2>
 
@@ -369,7 +374,7 @@ g.start();
     </section>
 
     <!-- V vector -->
-    <section class="row" style="width: 100%">
+    <section class="row" style="width: 100%" highlight="v0">
     <div class="col" title="This is the velocity vector of the satellite when it was observed at time 0">
         <h2 class="float-left text-light text-right">v0 = {</h2>
 
@@ -386,7 +391,7 @@ g.start();
     </section>
 
     <!-- h vector -->
-    <section class="row"  style="width: 100%" title="This is the angular momentum vector, which is defined as the cross product between the position vector `r` and the velocity vector `v`">
+    <section class="row"  style="width: 100%" title="This is the angular momentum vector, which is defined as the cross product between the position vector `r` and the velocity vector `v`" highlight="h">
     <div class="col">
         <h2 class="float-left text-light text-right">h = {</h2>
 
@@ -403,7 +408,7 @@ g.start();
     </section>
 
     <!-- e vector -->
-    <section class="row" style="width: 100%">
+    <section class="row" style="width: 100%" highlight="e">
     <div class="col">
         <h2 class="float-left text-light text-right">e = {</h2>
 
@@ -427,11 +432,11 @@ g.start();
     <div class="row">
         <h2 class="sm-col text-top" for="el.ω">ω</h2>
         <div class="col">
-        Is the <i highlight="ω">argument of periapsis</i>, meaning the angle from the <i highlight="n">line of the ascending node</i> at which the satellite is closest to focus of the orbit. It is defined as `ω = cos^-1(n*e)` where `n` is the normalized <i highlight="n">line of the ascending node</i> and <i highlight="e">`e`</i> is the normalized eccentricity vector.
+        Is the <i highlight="ω">argument of periapsis</i>, meaning the angle from the <i highlight="n">line of the ascending node</i> to the point at which the satellite is closest to focus of the orbit. It is defined as `ω = cos^-1(n*e)` where `n` is the normalized <i highlight="n">line of the ascending node</i> and <i highlight="e">`e`</i> is the normalized eccentricity vector.
         </div>
     </div>
     <div class="row">
-        <input id="el.ω-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
+        <input id="el.ω-text" type="number" class="slider-text sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
         <input id="el.ω" type="range" class="col custom-range" vectors_from_elements min="0" max="360" value="0">
     </div>
     <hr class="border-light"></hr>
@@ -440,11 +445,15 @@ g.start();
     <div class="row">
         <h2 class="sm-col text-top" for="el.ν">ν</h2>
         <div class="col">
-        Is the <i>true anomaly</i>. The true anomaly is the angle from the <i highlight="n">line of the ascending node</i> at which the satellite was first observed. The true anomaly is defined as `ν = cos^-1(r_0*e)` where both `r_0` is the normalized <i highlight="r0">position vector</i> and `e` is the normalized <i highlight="e">eccentricity</i> vector.
+        Is the <i>true anomaly</i>. The true anomaly is the angle from the <i highlight="n">line of the ascending node</i> at which the satellite was first observed. The true anomaly is defined as
+        <br/>
+        <i>`ν = cos^-1(r_0*e)`</i>
+        <br/>
+        where both `r_0` is the normalized <i highlight="r0">position vector</i> and `e` is the normalized <i highlight="e">eccentricity</i> vector.
         </div>
     </div>
     <div class="row">
-        <input id="el.ν-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
+        <input id="el.ν-text" type="number" class="slider-text sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
         <input id="el.ν" type="range" class="col custom-range" vectors_from_elements min="0" max="360" value="0">
     </div>
     <hr class="border-light"></hr>
@@ -453,11 +462,15 @@ g.start();
     <div class="row">
         <h2 class="sm-col text-top" for="el.Ω">Ω</h2>
         <div class="col">
-        Is the <i>longitude of the ascending node</i> the angle from the geocentric basis vector <i highlight="I">`I`</i> to the <i highlight="n">line of the ascending node</i>.
+        Is the <i>longitude of the ascending node</i> the angle from the geocentric basis vector <i highlight="I">`I`</i> to the <i highlight="n">line of the ascending node</i>. The longitude of the ascending node is defined as
+        <br/>
+        <i>`Ω = cos^-1(I*n)`</i>
+        <br/>
+        where both `n` is the normalized <i highlight="n">line of the ascending node</i> and <i>`I`</i> is the basis vector <i highlight="I">I</i>.
         </div>
     </div>
     <div class="row">
-        <input id="el.Ω-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
+        <input id="el.Ω-text" type="number" class="slider-text sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
         <input id="el.Ω" type="range" class="col custom-range" vectors_from_elements min="0" max="360" value="0">
     </div>
     <hr class="border-light"></hr>
@@ -476,7 +489,7 @@ g.start();
         </div>
     </div>
     <div class="row">
-        <input id="el.e-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="1" step="0.1" value="0">
+        <input id="el.e-text" type="number" class="slider-text sm-col text-light bg-dark" vectors_from_elements min="0" max="1" step="0.1" value="0">
         <input id="el.e" type="range" class="col custom-range" vectors_from_elements min="0" max="1" step="0.01" value="0">
     </div>
     <hr class="border-light"></hr>
@@ -493,17 +506,22 @@ g.start();
         </div>
     </div>
     <div class="row">
-        <input id="el.p-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements step="0.1" value="0">
+        <input id="el.p-text" type="number" class="slider-text sm-col text-light bg-dark" vectors_from_elements step="0.1" value="0">
     </div>
     <hr class="border-light"></hr>
 
     <!-- inclination -->
     <div class="row">
         <h2 class="sm-col text-top" for="el.i">i</h2>
-        <div class="col">is the <i>inclination</i> and defines the angle between the <i highlight="h">angular momentum vector</i> and the basis vector <i highlight="K">K</i>.</div>
+        <div class="col">is the <i>inclination</i> and defines the angle between the <i highlight="h">angular momentum vector</i> and the basis vector <i highlight="K">K</i>. It is defined as
+        <br/>
+        <i>`i = cos^-1(K*h)`</i>
+        <br/>
+        where both `h` is the normalized <i highlight="h">angular momentum vector</i> and <i>`K`</i> is the basis vector <i highlight="K">K</i>.
+    </div>
     </div>
     <div class="row">
-        <input id="el.i-text" type="number" class="sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
+        <input id="el.i-text" type="number" class="slider-text sm-col text-light bg-dark" vectors_from_elements min="0" max="360" value="0">
         <input id="el.i" type="range" class="col custom-range" vectors_from_elements min="0" max="180" value="0">
     </div>
 </section>
