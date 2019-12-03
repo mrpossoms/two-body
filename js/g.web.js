@@ -516,9 +516,17 @@ g.web = {
 		{
 			g.web._canvas.addEventListener("touchmove", function(e)
 			{
+                const t = e.touches[0];
 				e.preventDefault();
-                g.web.pointer._last = [0, 0];
-				on_move_func({ x: 0, y: 0 });
+
+                if (g.web.pointer._last)
+                {
+                    t.movementX = t.clientX - g.web.pointer._last[0];
+                    t.movementY = t.clientY - g.web.pointer._last[1];
+                }
+
+				on_move_func(t);
+                g.web.pointer._last = [ t.clientX, t.clientY ];
 			}, false);
 
 			g.web._canvas.addEventListener("mousemove", function(e)
@@ -571,15 +579,17 @@ g.web = {
 
 		on_press: function(on_press_func)
 		{
-			g.web._canvas.onmousedown = function(e)
+			g.web._canvas.ontouchstart = g.web._canvas.onmousedown = function(e)
             {
+                const t = e.touches[0];
+                g.web.pointer._last = [ t.clientX, t.clientY ];
                 on_press_func(e);
             };
 		},
 
         on_release: function(on_release_func)
         {
-            g.web._canvas.onmouseup = function()
+            g.web._canvas.ontouchend = g.web._canvas.ontouchcancel = g.web._canvas.onmouseup = function()
             {
                 on_release_func();
             };
@@ -637,10 +647,12 @@ g.web = {
         }
 
         g.web._canvas.requestPointerLock = g.web._canvas.requestPointerLock ||
-                                           g.web._canvas.mozRequestPointerLock;
+                                           g.web._canvas.mozRequestPointerLock ||
+                                           function(){};
 
         document.exitPointerLock = document.exitPointerLock ||
-                                   document.mozExitPointerLock;
+                                   document.mozExitPointerLock ||
+                                   function(){};
 
         g.web._canvas.requestPointerLock();
 
